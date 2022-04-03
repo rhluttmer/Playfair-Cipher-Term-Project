@@ -1,0 +1,38 @@
+
+
+Pseudocode:
+1. Make dictionary of plaintext pairs (keys) that map to ciphertext pairs (values)
+2. Go through all key-value pairs in dict, see if any have a letter shared
+between key and value. This means they are in row or column.
+3. Have list/set of sequences that appear in a row or column.
+4. Push the list together. For example, if have OPQ and PQR make it OPQR.
+can only do this with two letters in common, because just OPQ and QST could be
+QST going down.
+5. Place the longest string (or a string of length 3) if no longest.
+This can be placed anywhere because of how playfair works.
+6. Then it becomes a backtracking problem. But can be strategic by first
+trying out pairs that have letters in common with what has already been placed.
+Probably therefore good to have set of letters placed and letters remaining.
+
+Again to be strategic, favor stuff that's more alphabetical.
+
+
+Stupid approach:
+1. Make dict with which letters each letter encrypts to. Each set
+can have at most 5 letters. 
+2. Then put one letter down at the top corner (preferably letter with the biggesy set)
+3. Now take a letter in letter 1's set, and loop through 5 locations to put
+it, like a backtracking problem. 
+4. When you take the last letter from letter 1's set, then start placing
+letters that a letter already on the board encrypts to. 
+
+Problem: doesn't consider interaction between two plaintext letters. Likely
+end up with board where every letter can encrypt to right things 
+but letter pairs don't work well together
+
+
+
+
+
+
+

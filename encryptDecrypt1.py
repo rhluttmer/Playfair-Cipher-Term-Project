@@ -31,6 +31,8 @@ def encryptPlayfair(plaintext, key, mode='encrypt'):
     return newText
 
 def main():
-    print(encryptPlayfair('FCBLADSZOETN', 'computer', 'decrypt'))
+    print(encryptPlayfair('FBNWUFZSBSOT', 'computer', 'decrypt'))
+
+# FCBLADSZOETN = does this work / Key: computer
 
 main()

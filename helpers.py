@@ -15,24 +15,6 @@ Still need to make this more user proof
 
 import string
 
-# Takes a plaintext and a key and returns the ciphertext using playfair
-def encryptPlayfair(plaintext, key):
-    # Make the required table using the keyword
-    keyTable = makeKeyTable(key)
-
-    # Process plaintext so that it is ready for encoding
-    digraphList = makeDigraphL(plaintext)
-
-    cipherText = ''
-
-    # Encode one digraph at a time
-    for digraph in digraphList:
-        cipherLetter1, cipherLetter2 = encryptDigraph(digraph, keyTable)
-        cipherText += cipherLetter1 + cipherLetter2
-
-    return cipherText
-
-
 # Uses keyword to create table for encryption / decryption
 def makeKeyTable(key):
     tableDim = 5
@@ -79,19 +61,12 @@ def removeStringDuplicates(s):
     
     return s
 
-# Makes string upper, removes non-alpha characters, add's necessary X's
-# then turns string into list of digraphs
+# Makes string upper, removes non-alpha characters, add's necessary X's,
+# and replaces J's with I's, then turns string into list of digraphs
 def makeDigraphL(text):
-    text = text.upper()
-    
-    # Remove all non-alphabetic characters
-    i = 0
-    while i < len(text):
-        if not text[i].isalpha():
-            text = text[:i] + text[i+1:]
-        else:
-            i += 1
-
+    # Make uppercase and remove all non-alphabetic characters
+    # and replace all J's with I's
+    text = removeNonAlphas(text.upper()).replace('J', 'I')
 
     digraphList = []
 
@@ -103,6 +78,16 @@ def makeDigraphL(text):
         digraphList.append(digraph)
     
     return digraphList
+
+def removeNonAlphas(text):
+    i = 0
+    while i < len(text):
+        if not text[i].isalpha():
+            text = text[:i] + text[i+1:]
+        else:
+            i += 1
+    
+    return text
 
 # Take digraph, keyTable, and mode (encrypt or decrypt)
 # Returns the encrypted or decrypted digraph
@@ -143,10 +128,8 @@ def findNewDigraph(digraph, keyTable, mode='encrypt'):
     return (newLetter1, newLetter2)
 
 # Finds row and col index of letter (uses fact that only once in list)
-# Helper for encryptDigraph
+# Helper for findNewDigraph
 def findRowCol(letter, keyTable):
-    # Treat all J's as I's
-    if letter == 'J': letter = 'I'
 
     for row in range(len(keyTable)):
         for col in range(len(keyTable[0])):
