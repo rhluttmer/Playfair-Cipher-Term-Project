@@ -8,6 +8,13 @@ between key and value. This means they are in row or column.
 4. Push the list together. For example, if have OPQ and PQR make it OPQR.
 can only do this with two letters in common, because just OPQ and QST could be
 QST going down.
+
+Implemented up to here
+
+4.5. Look for triplets that must be in a row together. For example if
+AB -> YZ -> (something with A or B but not both) then all letters are
+in row because a rectangle would encode back to AB. 
+
 5. Place the longest string (or a string of length 3) if no longest.
 This can be placed anywhere because of how playfair works.
 6. Then it becomes a backtracking problem. But can be strategic by first

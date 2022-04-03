@@ -21,41 +21,49 @@ def findRowsAndCols(digraphMap):
         elif cipher[1] == plain[0]:
             rowsAndCols.append(plain[1] + plain[0] + cipher[0])
 
-
-    print(rowsAndCols)
-
- 
+    # Combine all strings that are in the same row
+    # For example ABC and BCD must be in same row, so becomes ABCD
+    rowsAndCols = combineRowsCols(rowsAndCols)
     
     return rowsAndCols
 
+# Combine all sequences in the same row
+# For example ABC and BCD can combine into ABCD 
 def combineRowsCols(rowsAndCols):
-    newRowsAndCols = set()
-
-    # Combine all sequences in the same row
-    # For example ABC and BCD can combine into ABCD 
+   
+    # Loop through pairs in list (done with 'while' because list mutates)
     i = 0
     while i < len(rowsAndCols):
         rowOrCol1 = rowsAndCols[i]
+        # Keeps tracks of whether rowOrCol1 was put into bigger string
+        combined = False
         
         j = i+1
         while j < len(rowsAndCols):
             rowOrCol2 = rowsAndCols[j]
 
-            # In form rowOrCol = CD... and rowOrCol2 = ...CD. Makes ...CD...
+            # In form rowOrCol = CD... and rowOrCol2 = ...CD. 
+            # Puts ...CD... at end of list and removes CD...
             if rowOrCol1[:2] == rowOrCol2[-2:]:
                 rowsAndCols.append(rowOrCol2 + rowOrCol1[2:])
-                
+                rowsAndCols.pop(j)
+                combined = True
                 
             # In form rowOrCol = ...CD and rowOrCol2 = CD... Makes ...CD...
             elif rowOrCol1[-2:] == rowOrCol2[:2]:
                 rowsAndCols.append(rowOrCol1 + rowOrCol2[2:])
-                
-            else:
-                newRowOrCol = rowOrCol2
-            
-            rowsAndCols[j] = newRowOrCol
+                rowsAndCols.pop(j)
+                combined = True
+           
+            else:  # Only increment if nothing was popped   
+                j += 1
         
-        i += 1
+        if combined == True:
+            rowsAndCols.pop(i)
+        else: # Once again, only increment if not popped
+            i += 1
+            
+    return rowsAndCols
 
 
 # Makes a dictionary of which ciphertect digraph each plaintext digraph maps to
@@ -93,18 +101,4 @@ def main():
     print(findRowsAndCols(digraphMap))
 
 main()
-
-
-
-
-
-'''
-Loop through texts, make dictionary of which diagraphs go to which
-Then find the ones that go to the same row or same column
-From there place rectangles of already placed letters
-And then place everything else
-
-'''
-
-
 
