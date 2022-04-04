@@ -7,7 +7,23 @@ def crackKeyTable(plaintext, ciphertext):
     rowsAndCols = findRowsAndCols(digraphMap)
     return 42
 
+def findEncryptPairs(digraphMap):
+    rectangles = set()
+    rows = set()
+
+    for key in digraphMap:
+        value = digraphMap[key]
+        if value in digraphMap:
+            digraph1, digraph2, digraph3 = key, value, digraphMap[value]
+            if digraph1 == digraph3:
+                rectangles.add((digraph1, digraph2))
+
+    # If reverse of value maps to reverse of key
+
+
+
 def findRowsAndCols(digraphMap):
+    # Initialized as list to make looping through easier, will become set
     rowsAndCols = []
 
     # Look for plain-cipher pairs that must encrypt in row or col
@@ -16,14 +32,14 @@ def findRowsAndCols(digraphMap):
         
         # IF AB -> BC then row or col is ABC
         if cipher[0] == plain[1]:
-            rowsAndCols.append(plain + cipher[1])
+            rowsAndCols.append(plain[0] + plain[1] + cipher[1])
         # Else if BA -> CB then row or col is ABC
         elif cipher[1] == plain[0]:
             rowsAndCols.append(plain[1] + plain[0] + cipher[0])
 
     # Combine all strings that are in the same row
     # For example ABC and BCD must be in same row, so becomes ABCD
-    rowsAndCols = combineRowsCols(rowsAndCols)
+    rowsAndCols = set(combineRowsCols(rowsAndCols))
     
     return rowsAndCols
 
@@ -89,16 +105,17 @@ def makeDigraphMap(plaintext, ciphertext):
         cipherChar1 = ciphertext[i]
         cipherChar2 = 'X' if (i+1 >= len(ciphertext)) else ciphertext[i+1]
 
-        digraphMap[plainChar1 + plainChar2] = cipherChar1 + cipherChar2
+        digraphMap[(plainChar1, plainChar2)] = (cipherChar1, cipherChar2)
     
     return digraphMap
     
-
+'''
 def main():
     plaintext = 'EX AM PL EA QU IC KB RO WN FO XI UM PS OV ER TH EL AZ YD OG AB'
     ciphertext = 'CZ BL LM AB RQ HD GE TM XM IL YH RP NU LY BU SI AP EV DI MI BC'
     digraphMap = makeDigraphMap(plaintext, ciphertext)
+    print(digraphMap)
     print(findRowsAndCols(digraphMap))
 
 main()
-
+'''

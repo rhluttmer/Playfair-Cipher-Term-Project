@@ -11,6 +11,9 @@ QST going down.
 
 Implemented up to here
 
+4.3. Loop through try to find AB -> YZ -> ??? tells you whether rectangle
+or row/col encryption
+
 4.5. Look for triplets that must be in a row together. For example if
 AB -> YZ -> (something with A or B but not both) then all letters are
 in row because a rectangle would encode back to AB. 
@@ -39,7 +42,12 @@ but letter pairs don't work well together
 
 
 
-
+Very brute force way:
+1. Place A on the top left corner (there's always a way that allows this)
+2. Loop through the list (moving along rows), placing letters
+3. Also have a set to keep track of which letters have been placed.
+4. Before placing a letter, check that any digraph key-value pair which
+has all letters in board encrypts the right way. 
 
 
 
