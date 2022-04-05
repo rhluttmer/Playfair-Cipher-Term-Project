@@ -1,4 +1,5 @@
 import helpers
+import digraphClass
 
 '''
 Rules being used:
@@ -20,18 +21,19 @@ def encryptPlayfair(plaintext, key, mode='encrypt'):
     
     # Process plaintext so that it is ready for encoding
     digraphList = helpers.makeDigraphL(plaintext)
-
+    
     newText = ''
 
     # Encode/decode one digraph at a time
     for digraph in digraphList:
-        newLetter1, newLetter2 = helpers.findNewDigraph(digraph, keyTable, mode)
+        newDigraph = helpers.findNewDigraph(digraph, keyTable, mode)
+        newLetter1, newLetter2 = newDigraph.let1, newDigraph.let2
         newText += newLetter1 + newLetter2
 
     return newText
 
 def main():
-    print(encryptPlayfair('FBNWUFZSBSOT', 'computer', 'decrypt'))
+    print(encryptPlayfair('does this work', 'computer', 'encrypt'))
 
 # FCBLADSZOETN = does this work / Key: computer
 

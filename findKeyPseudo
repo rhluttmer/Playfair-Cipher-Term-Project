@@ -9,10 +9,11 @@ between key and value. This means they are in row or column.
 can only do this with two letters in common, because just OPQ and QST could be
 QST going down.
 
-Implemented up to here
-
 4.3. Loop through try to find AB -> YZ -> ??? tells you whether rectangle
 or row/col encryption
+
+
+Implemented up to here
 
 4.5. Look for triplets that must be in a row together. For example if
 AB -> YZ -> (something with A or B but not both) then all letters are
@@ -30,7 +31,7 @@ Again to be strategic, favor stuff that's more alphabetical.
 Stupid approach:
 1. Make dict with which letters each letter encrypts to. Each set
 can have at most 5 letters. 
-2. Then put one letter down at the top corner (preferably letter with the biggesy set)
+2. Then put one letter down at the top corner (preferably letter with the biggest set)
 3. Now take a letter in letter 1's set, and loop through 5 locations to put
 it, like a backtracking problem. 
 4. When you take the last letter from letter 1's set, then start placing
@@ -49,5 +50,7 @@ Very brute force way:
 4. Before placing a letter, check that any digraph key-value pair which
 has all letters in board encrypts the right way. 
 
-
+Can add to legal function. Use the dict of what the things map to. Then when 
+placing letter, look at what's in row. At least to decide which one is
+left to place?
 

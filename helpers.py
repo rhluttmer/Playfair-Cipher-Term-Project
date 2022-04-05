@@ -1,3 +1,5 @@
+import digraphClass
+
 # Rose Luttmer
 
 '''
@@ -72,9 +74,9 @@ def makeDigraphL(text):
 
     for i in range(0, len(text), 2):
         if i+1 >= len(text) or text[i] == text[i+1]:
-            digraph = (text[i], 'X')
+            digraph = digraphClass.Digraph(text[i], 'X')
         else:
-            digraph = (text[i], text[i+1])
+            digraph = digraphClass.Digraph(text[i], text[i+1])
         digraphList.append(digraph)
     
     return digraphList
@@ -95,7 +97,7 @@ def removeNonAlphas(text):
 def findNewDigraph(digraph, keyTable, mode='encrypt'):
     boardDim = len(keyTable)
 
-    (letter1, letter2) = digraph
+    (letter1, letter2) = digraph.let1, digraph.let2
 
     (row1, col1) = findRowCol(letter1, keyTable)
     (row2, col2) = findRowCol(letter2, keyTable)
@@ -125,7 +127,7 @@ def findNewDigraph(digraph, keyTable, mode='encrypt'):
         newLetter1 = keyTable[row1][col2]
         newLetter2 = keyTable[row2][col1]
     
-    return (newLetter1, newLetter2)
+    return digraphClass.Digraph(newLetter1, newLetter2)
 
 # Finds row and col index of letter (uses fact that only once in list)
 # Helper for findNewDigraph
