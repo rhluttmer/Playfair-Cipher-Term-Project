@@ -24,6 +24,10 @@ make list with letter instances
 It says letter preceding (in row), letter succeeding, row sharing letters,
 non row sharing letters
 
+Note: Technically, the letter representation loses a little info
+Because could know letters were in row but now just know succeed proceed
+not in which direction
+
 
 4.5. Look for triplets that must be in a row together. For example if
 AB -> YZ -> (something with A or B but not both) then all letters are
@@ -36,6 +40,10 @@ trying out pairs that have letters in common with what has already been placed.
 Probably therefore good to have set of letters placed and letters remaining.
 
 Again to be strategic, favor stuff that's more alphabetical.
+
+NOTE: at end, can put the rows in the order. First do it so that each particular
+row is in as much alphabetical order as possible, then only the top rows
+should be out of alphabetical order so make those ones the top.
 
 
 Stupid approach:

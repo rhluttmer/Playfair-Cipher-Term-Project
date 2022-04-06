@@ -1,6 +1,7 @@
 import encryptDecrypt
 import classes
 import letterDictHelpers
+import string
 
 
 def crackKeyTable(plaintext, ciphertext):
@@ -18,16 +19,160 @@ def crackKeyTable(plaintext, ciphertext):
     board[0][0] = firstToPlace
     lettersPlaced = {firstToPlace}
 
-    return crackTableHelper(board, (0,0), letterDict, lettersPlaced)
+    return crackTableHelper(board, (0,0), letterDict, digraphMap, lettersPlaced)
 
-def crackTableHelper(board, lastLoc, letterDict, lettersPlaced):
-    lastRow, lastCol = lastLoc
+def crackTableHelper(board, lastLoc, letterDict, digraphMap, lettersPlaced):
+    print(board)
+    boardDim = len(board)
     
-    if lastLoc == (len(board)-1, len(board[0])-1):
+    if lastLoc == (boardDim-1, boardDim-1):
         return board
     else:
-        pass
-    # TO DO : left off here - finish
+        newRow, newCol = findNewRowCol(lastLoc, boardDim)
+        newLoc = newRow, newCol
+        lastRow, lastCol = lastLoc
+        lastLetter = board[lastRow][lastCol]
+        
+        # This backtracking doesn't always do things perfectly chronologically
+        # If this spot is already full, just move one spot over and try again
+        if board[newRow][newCol] != 0:
+            return crackTableHelper(board, newLoc, letterDict, digraphMap, lettersPlaced)
+        
+        # Start by trying to place letters that succeed lastLatter
+        for newLetter in makeLetterOrder(lastLetter, letterDict):
+            solution = placeCheckUnplace(lastLetter, board, newLoc, letterDict, digraphMap, lettersPlaced)
+            if solution != None:
+                return solution
+        
+        return None
+
+
+        '''
+        Idea here:
+        - Place succeeding letter, if the succeeding letter is also inSameRow
+        then it has to work, you would either place it if room, or check that
+        it had wrapped around correctly. 
+        - If no solution with succeeding letter in row, it has to be below
+        in column (or wrapped around)
+        - Once succeeding letter is placed, assuming placement is still needed
+        everywhere else, then use function to find order to loop through
+        - Specifically, should go through row partners first
+        - Also a check here to make sure leaving enough room for row partners
+        
+        
+        '''
+        
+
+# Decide which order to search in
+def makeLetterOrder(letter, letterDict):
+    letterInst = letterDict[letter]
+    priority1 = letterInst.proceeds
+    
+    priority2 = letterInst.inSameRow - priority1
+    priority3 = letterInst.encryptsTo - priority2 - priority1
+    leftovers = set(string.ascii_uppercase) - priority3 - priority2 - priority1
+
+    return (sorted(priority1) + sorted(priority2) + 
+            sorted(priority3) + sorted(leftovers))
+
+
+
+# Checks if legal, if so then places letter and solves from there,
+# unplaces letter at end if no solution was found
+def placeCheckUnplace(letter, board, newLoc, letterDict, digraphMap, lettersPlaced):
+    newRow, newCol = newLoc
+    if letter in lettersPlaced:
+        return None
+    
+    board[newRow][newCol] = letter
+    lettersPlaced.add(letter)
+    
+    if (isLegalLetterwise(letter, board, newLoc, letterDict, lettersPlaced) and
+        isLegalDigraphwise(board, digraphMap, lettersPlaced)):
+        
+        solution = crackTableHelper(board, newLoc, letterDict, lettersPlaced)
+        
+        if solution != None:
+            return solution
+        
+    board[newRow][newCol] = 0
+    lettersPlaced.remove(letter)    
+    return None
+
+# Checks whether the letter obeys all properties dictated by letterDict
+def isLegalLetterwise(letter, board, newLoc, letterDict, lettersPlaced):
+    newRow, newCol = newLoc
+    boardDim = len(board)
+
+    # If letter's row partners have been placed, they must be in the same row
+    for letter2 in letterDict[letter].inSameRow:
+        if (letter2 in lettersPlaced and 
+            not isInRow(newRow, letter2, board)):
+            return False
+    
+    # If letter's col partners are placed, they must be in same col
+    for letter2 in letterDict[letter].inSameCol:
+        if (letter2 in lettersPlaced and
+            not isInCol(newCol, letter2, board)):
+            return False
+
+    # If there happened to be any letters placed, they need to be good
+    succeedingRowLetter = board[(newRow + 1) % boardDim][newCol]
+    if (succeedingRowLetter != 0 and 
+        succeedingRowLetter not in letterDict[letter].proceeds):
+        return False
+    succeedingColLetter = board[newRow][(newCol+1) % boardDim]
+    if (succeedingColLetter != 0 and 
+        succeedingColLetter not in letterDict[letter].proceeds):
+        return False
+    
+    return True
+
+# Returns False is from current board, a required digraph won't encrypt correctly
+def isLegalDigraphwise(board, digraphMap, lettersPlaced):
+    # Loop through digraphs in plaintext message
+    for plainDigraph in digraphMap:
+        plainLet1, plainLet2 = plainDigraph.let1, plainDigraph.let2
+
+        # If both digraph letters have been placed, see what they encrypt to
+        if plainLet1 in lettersPlaced and plainLet2 in lettersPlaced:
+            solutionDigraph = encryptDecrypt.findNewDigraph(plainDigraph, board)
+            solLet1, solLet2 = solutionDigraph.let1, solutionDigraph.let2
+            cipherDigraph = digraphMap[plainDigraph]
+            cipherLet1, cipherLet2 = cipherDigraph.let1, cipherDigraph.let2
+
+            # If the corresponding cipher letters have been placed,
+            # they must be in the same spot as the solution letters 
+            if ((cipherLet1 in lettersPlaced and solLet1 != cipherLet1)
+                or (cipherLet2 in lettersPlaced and solLet2 != cipherLet2)):
+                return False
+    return True
+
+    
+# Says whether 'letter' is found in row number 'row' of 'board'
+def isInRow(row, letter, board):
+    rowList = board[row]
+    for entry in rowList:
+        if entry == letter:
+            return True
+    
+    return False
+
+# Says whether 'letter' is in column number 'col' of board
+def isInCol(col, letter, board):
+    rows = len(board)
+    for row in rows:
+        if board[row][col] == letter:
+            return True
+    
+    return False
+
+
+
+
+
+
+
 
 # Makes a dictionary of which ciphertect digraph each plaintext digraph maps to
 def makeDigraphMap(plaintext, ciphertext):
@@ -59,7 +204,6 @@ def makeDigraphMap(plaintext, ciphertext):
     
     return digraphMap
 
-
 # Creates a letter dictionary which maps letters to Letter instances
 # These instances have letters that are encrypted to, letters in same row as
 # and more info
@@ -75,17 +219,30 @@ def createAndPopulateLetterDict(digraphMap):
 
     return letterDict
 
-
-def findLetterWithMostInfro(letterDict):
+# Decides which letter to place first by seeing which instance has the most info
+def findLetterWithMostInfo(letterDict):
     mostInfo = 0 
     bestLetter = None
 
     for letter in letterDict:
-        letterInfo = letter.amountOfInfo()
+        letterInfo = letterDict[letter].amountOfInfo()
         if letterInfo >= mostInfo:
             bestLetter, mostInfo = letter, letterInfo
     
     return bestLetter
+
+# Finds location of next piece to place 
+# (moving through board left to right, top to bottom)
+def findNewRowCol(lastLoc, boardDim):
+    oldRow, oldCol = lastLoc
+    newRow, newCol = oldRow, oldCol + 1
+
+    if newCol >= boardDim:
+        newRow += (newCol // boardDim)
+        newCol = newCol % boardDim
+        
+    
+    return newRow, newCol
 
 
 def main():
@@ -93,27 +250,15 @@ def main():
     plaintext = 'EX AM PL EA QU IC KB RO WN FO XI UM PS OV ER TH EL AZ YD OG AB MX AC DB'
     ciphertext = 'CZ BL LM AB RQ HD GE TM XM IL YH RP NU LY BU SI AP EV DI MI BC NW BD EC'
     
-    crackKeyTable(plaintext, ciphertext)
-
-
+    print(crackKeyTable(plaintext, ciphertext))
     '''
     digraphMap = makeDigraphMap(plaintext, ciphertext)
-
-    letterDict = makeEmptyLetterDict()
-    addEncryptsTo(digraphMap, letterDict)
-    print()
-    print(letterDict)
-    print()
-
-    makeRowPartners(letterDict)
-    print(letterDict)
+    letterDict = createAndPopulateLetterDict(digraphMap)
+    print(makeLetterOrder('A', letterDict))
+    print(len(makeLetterOrder('A', letterDict)))
     '''
+
     
-    '''
-    rectangles, rowsOrCols = findRectOrRowPairs(digraphMap)
-    print(rowsOrCols)
-    print(makeRowPartners(rows))
-    '''
     
 
 main()

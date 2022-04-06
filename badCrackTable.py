@@ -24,18 +24,13 @@ def crackHelper(board, lastLoc, lettersPlaced, digraphMap):
     #print(len(lettersPlaced) * 4, '%')
     #print(board)
 
-    lastRow, lastCol = lastLoc
+    boardDim = len(board)
     
-    if lastLoc == (len(board)-1, len(board[0])-1):
+    if lastLoc == (boardDim-1, boardDim-1):
         return board
     
     else:
-        if lastCol == len(board[0]) - 1:
-            newCol = 0
-            newRow = lastRow + 1
-        else:
-            newCol = lastCol + 1
-            newRow = lastRow
+        newRow, newCol = crackTable1.findNewRowCol(lastLoc, boardDim)
         
         for letter in string.ascii_uppercase:
             if (letter not in lettersPlaced and letter != 'J'):
@@ -55,6 +50,7 @@ def crackHelper(board, lastLoc, lettersPlaced, digraphMap):
                 board[newRow][newCol] = 0
         
         return None
+
 
 # Returns False is from current board, a required digraph won't encrypt correctly
 def isLegal(board, digraphMap, lettersPlaced):
@@ -84,6 +80,7 @@ def main():
     #digraphMap = crackTable1.makeDigraphMap(plaintext, ciphertext)
     #print(digraphMap)
     print(crackKeyTable(plaintext, ciphertext))
+    
 
 
 main()

@@ -32,6 +32,14 @@ class Letter(object):
                 f'row with {self.inSameRow}, col with {self.inSameCol}, ' + 
                 f'succeeds {self.succeeds}, proceeds {self.proceeds}')
 
+    # This is just so we can check that a letter is not equal to 0
+    def __eq__(self, other):
+        if not isinstance(other, Letter):
+            return False
+        
+        return self.name == other.name
+
+
     # Approximates how much we know about letter
     # Useful to decide where to start backtracking
     def amountOfInfo(self):
