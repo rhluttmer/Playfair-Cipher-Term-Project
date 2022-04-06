@@ -1,9 +1,3 @@
-'''
-Attempts to be more efficient than 'badCrackTable' by being more
-selective in how letters are placed. However, even though I gather a lot of
-info about the digraphs at the begginning, not all of it is used. THe program
-ultimately takes much too long to run. 
- '''
 
 import encryptDecrypt
 import classes
@@ -19,44 +13,129 @@ def crackKeyTable(plaintext, ciphertext):
     
     # Make a dictionary that maps letters to letter instances that store
     # all the information about how the letter encrypts / decrypts
-    letterDict = createAndPopulateLetterDict(digraphMap)
+    letterDict, rows, cols, rowsOrCols = createAndPopulateLetterDict(digraphMap)
     
+    print(rows)
+    print(cols)
+    print(rowsOrCols)
+
+    
+    '''
     for letter in letterDict:
         print(letterDict[letter])
+    '''
 
     board = [[0]*5 for _ in range(boardDim)]
+    
+    longestRow = findLongestRow(rows)
+    if longestRow != None:
+        putInRow(board, longestRow, (0,0))
+        rows.remove(longestRow)
+    
+    return outerBacktrack(board, rows, cols, rowsOrCols, digraphMap, letterDict)
+
+    '''
+    return
+
+
     firstToPlace = findLetterWithMostInfo(letterDict)
     board[0][0] = firstToPlace
     lettersPlaced = {firstToPlace}
 
     return crackTableHelper(board, (0,0), letterDict, digraphMap, lettersPlaced)
+    '''
 
-# Backtracking function to find the table
-def crackTableHelper(board, lastLoc, letterDict, digraphMap, lettersPlaced):
-    print(board)
-    boardDim = len(board)
-    
-    if lastLoc == (boardDim-1, boardDim-1):
-        return board
+# This places all row, column blocks, then once done calls an inner
+# backtracking function
+def outerBacktrack(board, rows, cols, rowsOrCols, digraphMap, letterDict):
+    if len(rows) + len(cols) + len(rowsOrCols) == 0:
+        pass #return innerBacktrack(stuff)
+
     else:
-        newRow, newCol = findNewRowCol(lastLoc, boardDim)
-        newLoc = newRow, newCol
-        lastRow, lastCol = lastLoc
-        lastLetter = board[lastRow][lastCol]
+        if len(rows) != 0:
+            for row in rows:
+                '''
+                loop through starting locations, try placing the row there,
+                solve from this point, take row out if couldn't solve
+
+                this should probably be in a helper function to not make
+                this function itself too long
+                
+                '''
+                pass
+
+            # If got here, there's a row that can't be placed
+            return None
         
-        # This backtracking doesn't always do things perfectly chronologically
-        # If this spot is already full, just move one spot over and try again
-        if board[newRow][newCol] != 0:
-            return crackTableHelper(board, newLoc, letterDict, digraphMap, lettersPlaced)
+        elif len(cols) != 0:
+            for col in cols:
+                pass
         
-        # Start by trying to place letters that succeed lastLatter
-        for newLetter in makeLetterOrder(lastLetter, letterDict):
-            solution = placeCheckUnplace(newLetter, board, newLoc, letterDict, digraphMap, lettersPlaced)
-            if solution != None:
-                return solution
+            return None
+
+        else: # we know rowsOrCols is nonepty, otherwise returned in base case
+            for rowOrCol in rowsOrCols:
+                pass
+            
+            return None
+
         
-        return None
-     
+
+    '''
+    want to place all rows, then all cols, then all rows or Cols
+    
+    '''
+    
+    pass
+
+
+
+
+# Puts row into board, returns True if successful, False otherwise
+# Mutates board
+def putInRow(board, rowList, leftLoc):
+    boardDim = len(board[0])
+
+    # Temporary, should be removed once know this error won't occur
+    if len(rowList) > boardDim:
+        print('Error, row was too long')
+        return False
+
+    row, col = leftLoc
+
+    if not canPutRowInBoard(board, boardDim, rowList, row, col):
+        return False
+
+    
+    for i in range(len(rowList)):
+        board[row][(col + i) % boardDim] = rowList[i]
+    
+    return True
+    
+    
+def canPutRowInBoard(board, boardDim, rowList, row, col):
+    for i in range(len(rowList)):
+        currentCol = (col + i) % boardDim
+        if board[row][currentCol] != 0:
+            return False
+    
+    return True
+
+def findLongestRow(rows):
+    if len(rows) == 0:
+        return 0
+    
+    bestRow = None
+    bestLength = 0
+
+    for row in rows:
+        if len(row) >= bestLength:
+            bestLength = len(row)
+            bestRow = row
+    
+    return bestRow
+
+
 
 # Makes a dictionary of which ciphertext digraph each plaintext digraph maps to
 def makeDigraphMap(plaintext, ciphertext):
@@ -97,11 +176,71 @@ def createAndPopulateLetterDict(digraphMap):
     letterDictHelpers.addEncryptsTo(digraphMap, letterDict)
     letterDictHelpers.makeRowPartners(letterDict)
 
+    # These are rows/cols but if two letters from a segment here are in the 
+    # same row, then the whole thing is in a row
     rowsOrCols = letterDictHelpers.findOrderedRowsCols(digraphMap, letterDict)
 
     letterDictHelpers.updateProcSuccLetters(letterDict, rowsOrCols)
 
-    return letterDict
+    rows, cols = findStrictRowsCols(letterDict, rowsOrCols)
+
+    return letterDict, rows, cols, rowsOrCols
+
+
+def findStrictRowsCols(letterDict, rowsOrCols):
+    rows = set()
+    cols = set()
+
+    # Loop through rows/cols, for each one check if two of its letters are
+    # in the same row or column
+    for rowOrCol in rowsOrCols:
+        for i in range(len(rowOrCol)):
+            letter1 = rowOrCol[i]
+            for j in range(i+1, len(rowOrCol)):
+                letter2 = rowOrCol[j]
+
+                # Only need to check one way because it is symmetric
+                if letter2 in letterDict[letter1].inSameRow:
+                    rows.add(rowOrCol)
+                elif letter2 in letterDict[letter1].inSameCol:
+                    cols.add(letter2)
+    
+    # Only remove at end to not mess up looping
+    rowsOrCols -= rows
+    rowsOrCols -= cols
+    
+    return rows, cols
+
+
+
+
+# Backtracking function to find the table
+def crackTableHelper(board, lastLoc, letterDict, digraphMap, lettersPlaced):
+    print(board)
+    boardDim = len(board)
+    
+    if lastLoc == (boardDim-1, boardDim-1):
+        return board
+    else:
+        newRow, newCol = findNewRowCol(lastLoc, boardDim)
+        newLoc = newRow, newCol
+        lastRow, lastCol = lastLoc
+        lastLetter = board[lastRow][lastCol]
+        
+        # This backtracking doesn't always do things perfectly chronologically
+        # If this spot is already full, just move one spot over and try again
+        if board[newRow][newCol] != 0:
+            return crackTableHelper(board, newLoc, letterDict, digraphMap, lettersPlaced)
+        
+        # Start by trying to place letters that succeed lastLatter
+        for newLetter in makeLetterOrder(lastLetter, letterDict):
+            solution = placeCheckUnplace(newLetter, board, newLoc, letterDict, digraphMap, lettersPlaced)
+            if solution != None:
+                return solution
+        
+        return None
+     
+
 
 
 

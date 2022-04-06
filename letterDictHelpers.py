@@ -3,9 +3,19 @@
 # but are only used to set up the backtracking, not actually during it
 
 
+'''
+Info found with these functions:
+For each letter, we know what it shares a row or column with (but not in
+which order this happens)
+Then we also have a list of things that are ordered bits of rows or columns
+And we also have a set of some ordered bits that must be in rows
+
+'''
+
+
 import classes
 
-# Makes a dict of letter instances
+# Makes a dict mapping letter names to 'Letter' instances
 def makeEmptyLetterDict():
     letterDict = {}
     
@@ -18,7 +28,6 @@ def makeEmptyLetterDict():
 # Updates letter dict to reflect which letters each letter encrypts to
 # Mutating
 def addEncryptsTo(digraphMap, letterDict):
-
     for digraph in digraphMap:
         encodedDigraph = digraphMap[digraph]
         letterDict[digraph.let1].encryptsTo.add(encodedDigraph.let1)
@@ -29,7 +38,7 @@ def addEncryptsTo(digraphMap, letterDict):
 def makeRowPartners(letterDict):
     unorderedRows = findUnorderedRows(letterDict)
     
-    
+    # Takes a list full of row sets and updates letter dict
     for row in unorderedRows:
         for letter in row:
             letterDict[letter].inSameRow = ( letterDict[letter].inSameRow 
@@ -61,32 +70,45 @@ def findUnorderedRows(letterDict):
     
     return rows
 
-# Updates letterDict to say which letter each letter proceeds and succeeds
-# in either a row or a column (eg if column is ABCDE then B.succeeds={A})
-# Mutating
-def updateProcSuccLetters(letterDict, rowsOrCols):
-    boardDim = 5
+# Finds pairs that must be in rectangles or in rows / columns
+# Adds column Partners to letterDict (mutates letterDict)
+def findOrderedRowsCols(digraphMap, letterDict):
+    rowsOrCols = findSimpleRowsOrCols(digraphMap)
+
+    for key in digraphMap:
+        value = digraphMap[key]
+        revdValue = value.reverse()
+
+        # Look for digraphs of which we know encryption and decryption
+        if value in digraphMap or revdValue in digraphMap:
+            digraph1, digraph2 = key, value
+            if value in digraphMap:
+                digraph3 = digraphMap[value]
+            else: # So revdValue in digraphMap
+                # Using fact that if BA -> DC then AB -> CD no matter what
+                revdDigraph3 = digraphMap[revdValue]
+                digraph3 = revdDigraph3.reverse()
     
-    # Go through each letter, see if we have data on its row or col
-    for letter in letterDict:
-        for rowOrCol in rowsOrCols:
-            letterLoc = rowOrCol.find(letter)
-            if letterLoc == -1:
-                continue
-
-            # If the letter is in a row or col, add what it succeeds and proceeds
-            if letterLoc - 1 in range(len(rowOrCol)):
-                letterDict[letter].succeeds.add(rowOrCol[letterLoc-1])
-            if letterLoc + 1 in range(len(rowOrCol)):
-                letterDict[letter].proceeds.add(rowOrCol[letterLoc+1])
-
-            # If have full row or column, can wrap around
-            if len(rowOrCol) == boardDim:
-                if letterLoc == 0:
-                    letterDict[letter].succeeds.add(rowOrCol[-1])
-                if letterLoc == boardDim - 1:
-                    letterDict[letter].proceeds.add(rowOrCol[0])
+            # Check for digraphs in rectanlge (AB -> CD -> AB)
+            if digraph1 == digraph3:
+                
+                # Then A and D are in column, and B and C are in column
+                letterDict[digraph1.let1].inSameCol.add(digraph2.let2)
+                letterDict[digraph1.let2].inSameCol.add(digraph2.let1)
             
+            # Check for letters in same row/col (AB -> CD -> EA) then row/col 
+            # BDACE or (AB -> CD -> BE) then row/col ACBDE
+            elif digraph3.let2 == digraph1.let1:
+                rowsOrCols.add(digraph1.let2 + digraph2.let2 + 
+                                digraph1.let1 + digraph2.let1 + digraph3.let1)
+            elif digraph3.let1 == digraph1.let2:
+                rowsOrCols.add(digraph1.let1 + digraph2.let1 + digraph3.let1 +
+                                digraph2.let2 + digraph3.let2)
+            
+    # Removes rows or cols with no information       
+    delUnneededRowsOrCols(rowsOrCols)
+    return rowsOrCols
+
 
 # Finds digraph pairs that must be consecutive in a row or column 
 # Example if AB -> BC then have row ABC
@@ -113,9 +135,10 @@ def findSimpleRowsOrCols(digraphMap):
     return rowsOrCols
 
 
+
 # Combine all sequences in the same row
 # For example ABC and BCD can combine into ABCD 
-# Helper for findRowsOrCols
+# Helper for findSimpleRowsOrCols
 def combineRowsCols(rowsOrCols):
    
     # Loop through pairs in list (done with 'while' because list mutates)
@@ -153,48 +176,8 @@ def combineRowsCols(rowsOrCols):
     return rowsOrCols
 
 
-# Finds pairs that must be in rectangles or in rows / columns
-# Adds column Partners to letterDict (mutates letterDict)
-def findOrderedRowsCols(digraphMap, letterDict):
-    rowsOrCols = findSimpleRowsOrCols(digraphMap)
 
-    for key in digraphMap:
-        value = digraphMap[key]
-        revdValue = value.reverse()
-
-        # Look for digraphs of which we know encryption and decryption
-        if value in digraphMap or revdValue in digraphMap:
-            digraph1, digraph2 = key, value
-            if value in digraphMap:
-                digraph3 = digraphMap[value]
-            else: # So revdValue in digraphMap
-                # Using fact that if BA -> DC then AB -> CD no matter what
-                revdDigraph3 = digraphMap[revdValue]
-                digraph3 = revdDigraph3.reverse()
-    
-            # Check for digraphs in rectanlge (AB -> CD -> AB)
-            if digraph1 == digraph3:
-                
-                # Then A and D are in column, and B and C are in column
-                letterDict[digraph1.let1].inSameCol.add(digraph2.let2)
-                letterDict[digraph1.let2].inSameCol.add(digraph2.let1)
-            
-            # Check for letters in same row (AB -> CD -> EA) then row BDACE
-            # or (AB -> CD -> BE) then row ACBDE
-            elif digraph3.let2 == digraph1.let1:
-                rowsOrCols.add(digraph1.let2 + digraph2.let2 + 
-                                digraph1.let1 + digraph2.let1 + digraph3.let1)
-            elif digraph3.let1 == digraph1.let2:
-                rowsOrCols.add(digraph1.let1 + digraph2.let1 + digraph3.let1 +
-                                digraph2.let2 + digraph3.let2)
-            
-    # Removes rows or cols with no information       
-    delUnneededRowsOrCols(rowsOrCols)
-    return rowsOrCols
-
-# Rows is stronger than rowsOrCols because we specifically know it
-# is in a row (can't be in col), so if an entry rowOrCol brings no
-# new information compared to what's in rows, then delete rowOrCol.
+# Removes rows/cols that are subsets of longer known row/col segments
 # Mutating method
 def delUnneededRowsOrCols(rowsOrCols):
     toRemove = set()
@@ -206,6 +189,8 @@ def delUnneededRowsOrCols(rowsOrCols):
                 
     rowsOrCols -= toRemove
     
+
+
 
 # Says whether smallRow is contained in bigRow with wrapparound allowed
 # Example isSubsetOf('DEA', 'ABCDE') returns True
@@ -219,5 +204,35 @@ def isSubsetOf(smallRow, bigRow):
         bigRow = bigRow[1:] + bigRow[0]
     
     return False
+
+
+
+# Updates letterDict to say which letter each letter proceeds and succeeds
+# in either a row or a column (eg if column is ABCDE then B.succeeds={A})
+# Mutating
+def updateProcSuccLetters(letterDict, rowsOrCols):
+    boardDim = 5
+    
+    # Go through each letter, see if we have data on its row or col
+    for letter in letterDict:
+        for rowOrCol in rowsOrCols:
+            letterLoc = rowOrCol.find(letter)
+            if letterLoc == -1:
+                continue
+
+            # If the letter is in a row or col, add what it succeeds and proceeds
+            if letterLoc - 1 in range(len(rowOrCol)):
+                letterDict[letter].succeeds.add(rowOrCol[letterLoc-1])
+            if letterLoc + 1 in range(len(rowOrCol)):
+                letterDict[letter].proceeds.add(rowOrCol[letterLoc+1])
+
+            # If have full row or column, can wrap around
+            if len(rowOrCol) == boardDim:
+                if letterLoc == 0:
+                    letterDict[letter].succeeds.add(rowOrCol[-1])
+                if letterLoc == boardDim - 1:
+                    letterDict[letter].proceeds.add(rowOrCol[0])
+            
+
 
 

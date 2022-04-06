@@ -1,5 +1,17 @@
 
 
+New idea: double backtracking
+place all row column bits
+then once all of those are placed, call backtracking to fill holes in with letters
+
+
+
+
+
+
+
+
+
 Pseudocode:
 1. Make dictionary of plaintext pairs (keys) that map to ciphertext pairs (values)
 2. Go through all key-value pairs in dict, see if any have a letter shared
@@ -44,6 +56,21 @@ Again to be strategic, favor stuff that's more alphabetical.
 NOTE: at end, can put the rows in the order. First do it so that each particular
 row is in as much alphabetical order as possible, then only the top rows
 should be out of alphabetical order so make those ones the top.
+
+
+
+        Idea here:
+        - Place succeeding letter, if the succeeding letter is also inSameRow
+        then it has to work, you would either place it if room, or check that
+        it had wrapped around correctly. 
+        - If no solution with succeeding letter in row, it has to be below
+        in column (or wrapped around)
+        - Once succeeding letter is placed, assuming placement is still needed
+        everywhere else, then use function to find order to loop through
+        - Specifically, should go through row partners first
+        - Also a check here to make sure leaving enough room for row partners
+        
+        
 
 
 Stupid approach:
