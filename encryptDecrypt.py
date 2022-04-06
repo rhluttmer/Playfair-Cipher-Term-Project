@@ -1,5 +1,3 @@
-import digraphClass
-
 # Rose Luttmer
 
 '''
@@ -16,6 +14,25 @@ Still need to make this more user proof
 '''
 
 import string
+import classes
+
+# Takes a message, key, and mode (encrypt or decrypt) and returns newMessage
+def encDecPlayfair(plaintext, key, mode='encrypt'):
+    # Make the required table using the keyword
+    keyTable = makeKeyTable(key)
+    
+    # Process plaintext so that it is ready for encoding
+    digraphList = makeDigraphL(plaintext)
+    
+    newText = ''
+
+    # Encode/decode one digraph at a time
+    for digraph in digraphList:
+        newDigraph = findNewDigraph(digraph, keyTable, mode)
+        newLetter1, newLetter2 = newDigraph.let1, newDigraph.let2
+        newText += newLetter1 + newLetter2
+
+    return newText
 
 # Uses keyword to create table for encryption / decryption
 def makeKeyTable(key):
@@ -74,9 +91,9 @@ def makeDigraphL(text):
 
     for i in range(0, len(text), 2):
         if i+1 >= len(text) or text[i] == text[i+1]:
-            digraph = digraphClass.Digraph(text[i], 'X')
+            digraph = classes.Digraph(text[i], 'X')
         else:
-            digraph = digraphClass.Digraph(text[i], text[i+1])
+            digraph = classes.Digraph(text[i], text[i+1])
         digraphList.append(digraph)
     
     return digraphList
@@ -127,7 +144,7 @@ def findNewDigraph(digraph, keyTable, mode='encrypt'):
         newLetter1 = keyTable[row1][col2]
         newLetter2 = keyTable[row2][col1]
     
-    return digraphClass.Digraph(newLetter1, newLetter2)
+    return classes.Digraph(newLetter1, newLetter2)
 
 # Finds row and col index of letter (uses fact that only once in list)
 # Helper for findNewDigraph

@@ -15,6 +15,16 @@ or row/col encryption
 
 Implemented up to here
 
+Okay so I have things that are in rows / cols chronologically
+And I have things that must be in rows but are out of order
+If there are two common letters, then they are describing same thing
+
+make list with letter instances
+
+It says letter preceding (in row), letter succeeding, row sharing letters,
+non row sharing letters
+
+
 4.5. Look for triplets that must be in a row together. For example if
 AB -> YZ -> (something with A or B but not both) then all letters are
 in row because a rectangle would encode back to AB. 

@@ -6,7 +6,7 @@
 import crackTable1
 import encryptDecrypt
 import string
-import classes
+
 
 def crackKeyTable(plaintext, ciphertext):
     boardDim = 5
@@ -19,10 +19,7 @@ def crackKeyTable(plaintext, ciphertext):
     return crackHelper(board, (0,0), lettersPlaced, digraphMap)
 
 def crackHelper(board, lastLoc, lettersPlaced, digraphMap):
-    #print(lettersPlaced, len(lettersPlaced))
-    #print(board)
-    #print(len(lettersPlaced) * 4, '%')
-    #print(board)
+    
 
     lastRow, lastCol = lastLoc
     
