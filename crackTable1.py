@@ -1,4 +1,8 @@
+# Rose Luttmer
+
 '''
+Finds key table from input of plaintext and ciphertext.
+
 Attempts to be more efficient than 'badCrackTable' by being more
 selective in how letters are placed. However, even though I gather a lot of
 info about the digraphs at the begginning, not all of it is used. THe program

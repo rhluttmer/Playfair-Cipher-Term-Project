@@ -1,9 +1,10 @@
-# Helper functions to the "createAndPopulateLetterDict" function
-# These are in their own file because they take up a lot of space
-# but are only used to set up the backtracking, not actually during it
-
+# Rose Luttmer
 
 '''
+Helper functions to the "createAndPopulateLetterDict" function
+(These are in their own file because they take up a lot of space
+but are only used to set up the backtracking, not actually during it)
+
 Info found with these functions:
 For each letter, we know what it shares a row or column with (but not in
 which order this happens)

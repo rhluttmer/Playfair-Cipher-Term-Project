@@ -1,6 +1,8 @@
 # Rose Luttmer
 
 '''
+This file encrypts and decrypts playfair messages (key must be entered)
+
 Rules being used:
 1. If digraph is same letter, replace second one with X, then encrypt
 2. If in same row, move down by one
@@ -34,6 +36,7 @@ def encDecPlayfair(plaintext, key, mode='encrypt'):
 
     return newText
 
+
 # Uses keyword to create table for encryption / decryption
 def makeKeyTable(key):
     tableDim = 5
@@ -63,6 +66,7 @@ def makeKeyTable(key):
 
     return keyTable
 
+
 # Removes all but the first instance of a letter in a string
 # Helper function for makeKeyTable
 def removeStringDuplicates(s):
@@ -79,6 +83,7 @@ def removeStringDuplicates(s):
             i += 1
     
     return s
+
 
 # Makes string upper, removes non-alpha characters, add's necessary X's,
 # and replaces J's with I's, then turns string into list of digraphs
@@ -98,6 +103,9 @@ def makeDigraphL(text):
     
     return digraphList
 
+
+# Takes non-alphabetic characters out of plaintext since those aren't 
+# included in playfair
 def removeNonAlphas(text):
     i = 0
     while i < len(text):
@@ -108,6 +116,7 @@ def removeNonAlphas(text):
     
     return text
 
+
 # Take digraph, keyTable, and mode (encrypt or decrypt)
 # Returns the encrypted or decrypted digraph
 # Helper to main encrypt/decrypt function
@@ -117,7 +126,9 @@ def findNewDigraph(digraph, keyTable, mode='encrypt'):
     (letter1, letter2) = digraph.let1, digraph.let2
 
     (row1, col1) = findRowCol(letter1, keyTable)
+    #print(row1, col1)
     (row2, col2) = findRowCol(letter2, keyTable)
+    #print(row2, col2)
 
     if row1 == row2:
         if mode == 'encrypt':
@@ -146,6 +157,7 @@ def findNewDigraph(digraph, keyTable, mode='encrypt'):
     
     return classes.Digraph(newLetter1, newLetter2)
 
+
 # Finds row and col index of letter (uses fact that only once in list)
 # Helper for findNewDigraph
 def findRowCol(letter, keyTable):
@@ -154,7 +166,7 @@ def findRowCol(letter, keyTable):
         for col in range(len(keyTable[0])):
             if keyTable[row][col] == letter:
                 return row, col
-    print(letter, keyTable)
+    
     return None, None
 
 

@@ -1,7 +1,11 @@
-# MUST BE FIXED
+# Rose Luttmer
 
+'''
+Uses backtracking to find key table from plaintext and ciphertext.
+As the name implies, this is a very brute force method. It will take very long
+to run unless the keyword only uses very particular letters
 
-# Uses backtracking but with very brute force technique
+'''
 
 import crackTable1
 import encryptDecrypt

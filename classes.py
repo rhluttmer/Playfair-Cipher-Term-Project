@@ -1,7 +1,20 @@
+# Rose Luttmer
+
+'''
+Defines the classes used in all other playfair files
+
+Digraph class stores pairs of letters
+Letter class stores sinlge letter
+
+'''
+
+
 class Digraph(object):
     def __init__(self, letter1, letter2):
         self.let1 = letter1
         self.let2 = letter2
+
+        # These two are populated by functions later on
         self.encryptsTo = None
         self.decryptsTo = None
     
@@ -21,27 +34,30 @@ class Digraph(object):
 class Letter(object):
     def __init__(self, letterName):
         self.name = letterName
+
+        # All of these are modified later
         self.encryptsTo = set()
         self.succeeds = set()
         self.proceeds = set()
         self.inSameRow = set()
         self.inSameCol = set()
 
+    # For now, I have all info included to make debugging easier
     def __repr__(self):
         return (f'{self.name}, encrypts to {self.encryptsTo}, ' + 
                 f'row with {self.inSameRow}, col with {self.inSameCol}, ' + 
                 f'succeeds {self.succeeds}, proceeds {self.proceeds}')
 
     # This is just so we can check that a letter is not equal to 0
+    # It is never actually used to check if two letters are equal
     def __eq__(self, other):
         if not isinstance(other, Letter):
             return False
         
         return self.name == other.name
 
-
     # Approximates how much we know about letter
-    # Useful to decide where to start backtracking
+    # Potentially ueful to decide where to start backtracking
     def amountOfInfo(self):
         return (3*len(self.succeeds) + 3*len(self.proceeds) 
                 + len(self.inSameRow) + len(self.inSameCol))

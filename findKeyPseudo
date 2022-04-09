@@ -8,10 +8,6 @@ then once all of those are placed, call backtracking to fill holes in with lette
 
 
 
-
-
-
-
 Pseudocode:
 1. Make dictionary of plaintext pairs (keys) that map to ciphertext pairs (values)
 2. Go through all key-value pairs in dict, see if any have a letter shared
@@ -99,3 +95,7 @@ Can add to legal function. Use the dict of what the things map to. Then when
 placing letter, look at what's in row. At least to decide which one is
 left to place?
 
+idea to improve bad crack table: start by placing v. and then start by
+trying letters that are later alphabetically. Likely, the key word doesn't have
+v, w, x, y, z, so then get that whole row placed first. It doesn't improve
+worst case runtime, but it probably improves average runtime
