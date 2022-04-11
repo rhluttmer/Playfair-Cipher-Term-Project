@@ -38,7 +38,7 @@ class Letter(object):
         # All of these are modified later
         self.encryptsTo = set()
         self.succeeds = set()
-        self.proceeds = set()
+        self.precedes = set()
         self.inSameRow = set()
         self.inSameCol = set()
 
@@ -46,7 +46,7 @@ class Letter(object):
     def __repr__(self):
         return (f'{self.name}, encrypts to {self.encryptsTo}, ' + 
                 f'row with {self.inSameRow}, col with {self.inSameCol}, ' + 
-                f'succeeds {self.succeeds}, proceeds {self.proceeds}')
+                f'succeeds {self.succeeds}, proceeds {self.precedes}')
 
     # This is just so we can check that a letter is not equal to 0
     # It is never actually used to check if two letters are equal
@@ -59,6 +59,6 @@ class Letter(object):
     # Approximates how much we know about letter
     # Potentially ueful to decide where to start backtracking
     def amountOfInfo(self):
-        return (3*len(self.succeeds) + 3*len(self.proceeds) 
+        return (3*len(self.succeeds) + 3*len(self.precedes) 
                 + len(self.inSameRow) + len(self.inSameCol))
      

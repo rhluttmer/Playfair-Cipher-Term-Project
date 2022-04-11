@@ -33,7 +33,7 @@ It says letter preceding (in row), letter succeeding, row sharing letters,
 non row sharing letters
 
 Note: Technically, the letter representation loses a little info
-Because could know letters were in row but now just know succeed proceed
+Because could know letters were in row but now just know succeed precede
 not in which direction
 
 

@@ -91,7 +91,7 @@ def createAndPopulateLetterDict(digraphMap):
     # same row, then the whole thing is in a row
     rowsOrCols = letterDictHelpers.findOrderedRowsCols(digraphMap, letterDict)
 
-    letterDictHelpers.updateProcSuccLetters(letterDict, rowsOrCols)
+    letterDictHelpers.updatePrecSuccLetters(letterDict, rowsOrCols)
 
     rows, cols = findStrictRowsCols(letterDict, rowsOrCols)
 

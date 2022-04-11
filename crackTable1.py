@@ -103,7 +103,7 @@ def createAndPopulateLetterDict(digraphMap):
 
     rowsOrCols = letterDictHelpers.findOrderedRowsCols(digraphMap, letterDict)
 
-    letterDictHelpers.updateProcSuccLetters(letterDict, rowsOrCols)
+    letterDictHelpers.updatePrecSuccLetters(letterDict, rowsOrCols)
 
     return letterDict
 
@@ -138,7 +138,7 @@ def findNewRowCol(lastLoc, boardDim):
 # Decide which order to search in
 def makeLetterOrder(letter, letterDict):
     letterInst = letterDict[letter]
-    priority1 = letterInst.proceeds
+    priority1 = letterInst.precedes
     
     priority2 = letterInst.inSameRow - priority1
     priority3 = letterInst.encryptsTo - priority2 - priority1
@@ -190,11 +190,11 @@ def isLegalLetterwise(letter, board, newLoc, letterDict, lettersPlaced):
     # If there happened to be any letters placed, they need to be good
     succeedingRowLetter = board[(newRow + 1) % boardDim][newCol]
     if (succeedingRowLetter != 0 and 
-        succeedingRowLetter not in letterDict[letter].proceeds):
+        succeedingRowLetter not in letterDict[letter].precedes):
         return False
     succeedingColLetter = board[newRow][(newCol+1) % boardDim]
     if (succeedingColLetter != 0 and 
-        succeedingColLetter not in letterDict[letter].proceeds):
+        succeedingColLetter not in letterDict[letter].precedes):
         return False
     
     return True
