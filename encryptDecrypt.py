@@ -47,7 +47,7 @@ def makeKeyTable(key):
     toPlace = key.upper() + string.ascii_uppercase
     
     # Since j's and i's are interchangable, only want i's
-    toPlace = toPlace.replace('J', '')
+    toPlace = toPlace.replace('J', 'I')
     
     # Remove all but first occurance of letter to get string of len 25
     toPlace = removeStringDuplicates(toPlace)

@@ -30,8 +30,6 @@ def crackKeyTable(plaintext, ciphertext):
     # all the information about how the letter encrypts / decrypts
     letterDict, rowSet, colSet, rowOrColSet = createAndPopulateLetterDict(digraphMap)
     
-    print(rowSet, colSet, rowOrColSet)
-
     board = [[0]*5 for _ in range(boardDim)]
     
     longestRow = findLongestRow(rowSet)
@@ -39,9 +37,17 @@ def crackKeyTable(plaintext, ciphertext):
         board = putInRow(board, longestRow, 0, 0)
         rowSet.remove(longestRow)
         lettersPlaced = set(longestRow)
+    else:
+        lettersPlaced = set()
     
-    return outerBacktrack(board, rowSet, colSet, rowOrColSet, digraphMap, 
-                          letterDict, lettersPlaced)
+    solution = outerBacktrack(board, rowSet, colSet, rowOrColSet, digraphMap, 
+                              letterDict, lettersPlaced)
+
+    print('sol', solution)
+    if solution == None:
+        return "There's no solution!"
+    else:
+        return formatSolution(solution)
 
     
 ###########################################################################
@@ -85,6 +91,9 @@ def createAndPopulateLetterDict(digraphMap):
     letterDict = letterDictHelpers.makeEmptyLetterDict()
 
     letterDictHelpers.addEncryptsTo(digraphMap, letterDict)
+    
+    # Adds some letters that must be in same row
+    letterDictHelpers.makeRowPartners(letterDict)
 
     # These are rows/cols but if two letters from a segment here are in the 
     # same row, then the whole thing is in a row
@@ -99,6 +108,7 @@ def createAndPopulateLetterDict(digraphMap):
 
 # Finds entries in the list rowsOrCols that must either be in a row or in a co
 def findStrictRowsCols(letterDict, rowsOrCols):
+    
     rows = set()
     cols = set()
 
@@ -114,7 +124,7 @@ def findStrictRowsCols(letterDict, rowsOrCols):
                 if letter2 in letterDict[letter1].inSameRow:
                     rows.add(rowOrCol)
                 elif letter2 in letterDict[letter1].inSameCol:
-                    cols.add(letter2)
+                    cols.add(rowOrCol)
     
     # Only remove at end to not mess up looping
     rowsOrCols -= rows
@@ -127,7 +137,7 @@ def findStrictRowsCols(letterDict, rowsOrCols):
 # first.
 def findLongestRow(rows):
     if len(rows) == 0:
-        return 0
+        return None
     
     bestRow = None
     bestLength = 0
@@ -196,7 +206,8 @@ def checkPlaceSolveRow(board, digraphMap, letterDict,
     for row in range(boardDim):
         for col in range(boardDim):
             # Check that board has free spaces for row
-            if not canPutRowInBoard(board, len(board), rowString, row, col):
+            if not canPutRowInBoard(board, len(board), rowString, 
+                                    row, col, lettersPlaced):
                 continue
     
             newBoard = putInRow(board, rowString, row, col)
@@ -234,7 +245,8 @@ def checkPlaceSolveCol(board, digraphMap, letterDict,
     for row in range(boardDim):
         for col in range(boardDim):
             # Check that board has free spaces for row
-            if not canPutColInBoard(board, len(board), colString, row, col):
+            if not canPutColInBoard(board, len(board), colString, 
+                                    row, col, lettersPlaced):
                 continue
     
             newBoard = putInCol(board, colString, row, col)
@@ -256,33 +268,45 @@ def checkPlaceSolveCol(board, digraphMap, letterDict,
      
 
 # Returns True if a row can be put in a board without changing any letters    
-def canPutRowInBoard(board, boardDim, rowString, row, col):
+def canPutRowInBoard(board, boardDim, rowString, row, col, lettersPlaced):
     # Temporary, should be removed once know this error won't occur
     if len(rowString) > boardDim:
         print('Error, row was too long')
         return False
     
     for i in range(len(rowString)):
-        currentCol = (col + i) % boardDim
+        currCol = (col + i) % boardDim
         # The square either has to be empty or already contain the right letter
         # in order for the placement to be valid
-        if board[row][currentCol] != 0 and board[row][currentCol] != rowString[i]:
+        if board[row][currCol] != 0 and board[row][currCol] != rowString[i]:
+            return False
+        
+        # If 'A' is already on the board from a previous word, we can't place 
+        # the 'A' in our string over an empty square (it needs to be over 'A')
+        elif (rowString[i] in lettersPlaced and 
+              board[row][currCol] != rowString[i]):
             return False
     
     return True
 
 # Returns True if a col can be put in a board without changing any letters    
-def canPutColInBoard(board, boardDim, colString, row, col):
+def canPutColInBoard(board, boardDim, colString, row, col, lettersPlaced):
     # Temporary, should be removed once know this error won't occur
     if len(colString) > boardDim:
         print('Error, row was too long')
         return False
     
     for i in range(len(colString)):
-        currentRow = (row + i) % boardDim
+        currCol = (row + i) % boardDim
         # The square either has to be empty or already contain the right letter
         # in order for the placement to be valid
-        if board[currentRow][col] != 0 and board[currentRow][col] != colString[i]:
+        if board[currCol][col] != 0 and board[currCol][col] != colString[i]:
+            return False
+        
+        # If 'A' is already on the board from a previous word, we can't place 
+        # the 'A' in our string over an empty square (it needs to be over 'A')
+        elif (colString[i] in lettersPlaced and 
+              board[currCol][col] != colString[i]):
             return False
     
     return True
@@ -339,6 +363,7 @@ def isLegalDigraphwise(board, digraphMap, lettersPlaced):
 
 # This places all remaining letters (the ones not in row or col strings)
 def innerBacktrack(board, lastLoc, letterDict, digraphMap, lettersPlaced):
+    
     boardDim = len(board)
 
     if lastLoc == (boardDim-1, boardDim-1):
@@ -378,8 +403,8 @@ def findNewRowCol(lastLoc, boardDim):
 
 
 # Returns list of letters in alphabetical order after letter
-# Example: letter = D, lettersPlaced = {A, F, J} returns:
-# [E, G, H, I, K, ...]
+# Example: letter = D, lettersPlaced = {A, F, I} returns:
+# [E, G, H, K, ...]
 def makeLetterOrderAlpha(letter, lettersPlaced):
     uppercaseLets = string.ascii_uppercase
     letterIndex = uppercaseLets.find(letter)
@@ -387,7 +412,7 @@ def makeLetterOrderAlpha(letter, lettersPlaced):
 
     i = 0
     while i < len(newOrder):
-        if newOrder[i] in lettersPlaced:
+        if newOrder[i] in lettersPlaced or newOrder[i] == 'J':
             newOrder.pop(i)
         else:
             i += 1
@@ -464,17 +489,86 @@ def isInCol(col, letter, board):
     return False
 
 ###########################################################################
+#                              final steps
+###########################################################################
+
+# Makes grid most likely to ressemble key table. Key table starts with key
+# word and then does rest of alphabet, so probably, the row with the most 
+# letters at the end of the alphabet is the bottom row. So it moves this row
+# to the bottom and then arranges the row so that first alphabetical letter
+# is first
+def formatSolution(solution):
+    heaviestRow = findHeaviestRow(solution)
+    solution = solution[heaviestRow + 1:] + solution[:heaviestRow + 1]
+
+    index = indexOf1stLetterAlphabetically(solution[-1])
+
+    for i in range(len(solution)):
+        colList = solution[i]
+        colList = colList[index:] + colList[:index]
+        solution[i] = colList
+
+    return solution
+
+
+# Finds row whose letters are last alphabetically (A has weight 0, Z has weight
+# 25, 'heaviest' row is one whose letters sum to biggest weight)
+def findHeaviestRow(solution):
+    heaviestRowNum = None
+    heaviestWeight = 0
+
+    for i in range(len(solution)):
+        currRow = solution[i]
+
+        currWeight = 0
+        for entry in currRow:
+            entryWeight = ord(entry) - ord('A')
+            currWeight += entryWeight
+        
+        if currWeight > heaviestWeight:
+            heaviestRowNum = i
+            heaviestWeight = currWeight
+    
+    return heaviestRowNum
+
+
+# Takes string as input, returns index of first letter alphabetically
+def indexOf1stLetterAlphabetically(row):
+    bestLetter = chr(ord('Z') + 1)
+    bestLetterLoc = None
+
+    for i in range(len(row)):
+        entry = row[i]
+        if entry < bestLetter:
+            bestLetterLoc = i
+            bestLetter = entry
+    
+    return bestLetterLoc
+
+    
+###########################################################################
 #                               main
 ###########################################################################
 
 
 def main():
-    plaintext = 'This is a test I really hope it works are there enough letters here?'
+    '''
+    plaintext = 'EX AM PL EA QU IC KB RO WN FO XI UM PS OV ER TH EL AZ YD OG AB'
+    ciphertext = 'CZ BL LM AB RQ HD GE TM XM IL YH RP NU LY BU SI AP EV DI MI BC'
+    print(crackKeyTable(plaintext, ciphertext))
+'''
+    
+    plaintext = '''This is a test 
+I really hope it works are there enough letters I'm going to keep writing
+because right now I just want to know if the program is correct not
+necessarily how fast it is, and ihave a feeling that more letters will help.
+'''
+
     ciphertext = encryptDecrypt.encDecPlayfair(plaintext, 'object')
-    print(ciphertext)
+    print(ciphertext, 'cipher')
 
     
-    print(crackKeyTable(plaintext, ciphertext))
+    print(crackKeyTable(plaintext, ciphertext), 'result')
    
 
 main()

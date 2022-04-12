@@ -36,40 +36,19 @@ def addEncryptsTo(digraphMap, letterDict):
     
 # Adds row partners into letterDict
 # Mutating function (changes letterDict)
-def makeRowPartnersOld(letterDict):
-    unorderedRows = findUnorderedRowsOld(letterDict)
-    
-    # Takes a list full of row sets and updates letter dict
-    for row in unorderedRows:
-        for letter in row:
-            letterDict[letter].inSameRow = ( letterDict[letter].inSameRow 
-                                             | row - {letter} )
- 
- # Makes a list of sets of rows
- # Helper for makeRowPartners
-def findUnorderedRowsOld(letterDict):
-    rows = []
-
+def makeRowPartners(letterDict):
     # Motivation: If A -> B and B -> A they must be in rows (from rectangles)
     for letter1 in letterDict:
         for letter2 in letterDict[letter1].encryptsTo:
             if  letter1 in letterDict[letter2].encryptsTo:
-        
-                putInList = False
-                for entry in rows:
-                    if letter2 in entry:
-                        entry.add(letter1)
-                        putInList = True
-                        break
-                    elif letter1 in entry:
-                        entry.add(letter2)
-                        putInList = True
-                        break
-                if putInList == False:
-                    rows.append({letter1, letter2})
-                
+                letterDict[letter1].inSameRow.add(letter2)
+                letterDict[letter2].inSameRow.add(letter1)
+
+
+   
+
     
-    return rows
+       
 
 # Make it so that all letters in a row have all other letters listed
 # For example, input could have A.inSameRow = {B}, B.inSameRow = {C,D}
@@ -136,19 +115,7 @@ def consolidateColPartners(letterDict):
                 letterDict[letter].inSameCol = col - {letter}
     
     
-   
 
-def main():
-    letterDict = makeEmptyLetterDict()
-    letterDict['A'].inSameRow = {'B'}
-    letterDict['B'].inSameRow = {'C','D'}
-    letterDict['D'].inSameRow = {'A','E'}
-    letterDict['G'].inSameRow = {'H','I'}
-    letterDict['I'].inSameRow = {'G','J'}
-    letterDict['Z'].inSameRow = {'X'}
-    consolidateRowColPartners(letterDict)
-
-main()
 
 
 
@@ -177,7 +144,7 @@ def findOrderedRowsCols(digraphMap, letterDict):
                 # Using fact that if BA -> DC then AB -> CD no matter what
                 revdDigraph3 = digraphMap[revdValue]
                 digraph3 = revdDigraph3.reverse()
-
+                
             dealWithRectangles(digraph1, digraph2, digraph3, letterDict)
 
             # Check for letters in same row/col (AB -> CD -> EA) then row/col 
@@ -221,20 +188,13 @@ def findSimpleRowsOrCols(digraphMap):
 # If digraphs are in rectangle, updates row and column partners
 def dealWithRectangles(digraph1, digraph2, digraph3, letterDict):
     # Check for digraphs in rectanlge (AB -> CD -> AB)
-    if digraph1 == digraph3:
-                
+    if digraph1 == digraph3:   
         # Then A and D are in column, and B and C are in column
+        # (Also have row A/C and B/D but this has already been added)
         letterDict[digraph1.let1].inSameCol.add(digraph2.let2)
         letterDict[digraph2.let2].inSameCol.add(digraph1.let1)
         letterDict[digraph1.let2].inSameCol.add(digraph2.let1)
         letterDict[digraph2.let1].inSameCol.add(digraph1.let2)
-
-        # Also A and C are in row, B and D are in row
-        letterDict[digraph1.let1].inSameCol.add(digraph2.let1)
-        letterDict[digraph2.let1].inSameCol.add(digraph1.let1)
-        letterDict[digraph1.let2].inSameCol.add(digraph2.let2)
-        letterDict[digraph2.let2].inSameCol.add(digraph1.let2)
-
 
 
 # Combine all sequences in the same row
