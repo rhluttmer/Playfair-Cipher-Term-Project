@@ -37,8 +37,8 @@ class Letter(object):
 
         # All of these are modified later
         self.encryptsTo = set()
-        self.succeeds = set()
-        self.precedes = set()
+        self.succeeds = set() # which letter(s) self comes after
+        self.precedes = set() # which letter(s) self comes before
         self.inSameRow = set()
         self.inSameCol = set()
 

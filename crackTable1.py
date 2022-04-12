@@ -99,10 +99,13 @@ def createAndPopulateLetterDict(digraphMap):
     letterDict = letterDictHelpers.makeEmptyLetterDict()
 
     letterDictHelpers.addEncryptsTo(digraphMap, letterDict)
-    letterDictHelpers.makeRowPartners(letterDict)
-
+    
+    # Finds ordered rows/cols but also adds stuff to .inSameRow and .inSameCol
     rowsOrCols = letterDictHelpers.findOrderedRowsCols(digraphMap, letterDict)
-
+    
+    # Normalizes information in .inSameRow and .inSameCol instances
+    letterDictHelpers.consolidateRowColPartners(letterDict)
+    
     letterDictHelpers.updatePrecSuccLetters(letterDict, rowsOrCols)
 
     return letterDict

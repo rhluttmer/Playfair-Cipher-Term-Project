@@ -85,13 +85,13 @@ def createAndPopulateLetterDict(digraphMap):
     letterDict = letterDictHelpers.makeEmptyLetterDict()
 
     letterDictHelpers.addEncryptsTo(digraphMap, letterDict)
-    letterDictHelpers.makeRowPartners(letterDict)
 
     # These are rows/cols but if two letters from a segment here are in the 
     # same row, then the whole thing is in a row
     rowsOrCols = letterDictHelpers.findOrderedRowsCols(digraphMap, letterDict)
 
-    letterDictHelpers.updatePrecSuccLetters(letterDict, rowsOrCols)
+    # Normalizes information in .inSameRow and .inSameCol instances
+    letterDictHelpers.consolidateRowColPartners(letterDict)
 
     rows, cols = findStrictRowsCols(letterDict, rowsOrCols)
 

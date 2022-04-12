@@ -36,8 +36,8 @@ def addEncryptsTo(digraphMap, letterDict):
     
 # Adds row partners into letterDict
 # Mutating function (changes letterDict)
-def makeRowPartners(letterDict):
-    unorderedRows = findUnorderedRows(letterDict)
+def makeRowPartnersOld(letterDict):
+    unorderedRows = findUnorderedRowsOld(letterDict)
     
     # Takes a list full of row sets and updates letter dict
     for row in unorderedRows:
@@ -47,7 +47,7 @@ def makeRowPartners(letterDict):
  
  # Makes a list of sets of rows
  # Helper for makeRowPartners
-def findUnorderedRows(letterDict):
+def findUnorderedRowsOld(letterDict):
     rows = []
 
     # Motivation: If A -> B and B -> A they must be in rows (from rectangles)
@@ -71,11 +71,99 @@ def findUnorderedRows(letterDict):
     
     return rows
 
+# Make it so that all letters in a row have all other letters listed
+# For example, input could have A.inSameRow = {B}, B.inSameRow = {C,D}
+# and D.inSameRow = {A,E}, this would make it so that
+# A.inSameRow = {B, C, D, E}, B.inSameRow = {A, C, D, E}, etc
+def consolidateRowColPartners(letterDict):
+    consolidateRowPartners(letterDict)
+    consolidateColPartners(letterDict)
+    
+# Mutatingly changes letterDic so that all letters in same row are listed
+# (See consolidateRowColParners for more in-depth explanation)
+def consolidateRowPartners(letterDict):
+    # This will hold all known rows temporarily
+    rows = []
+    
+    # Update rows list
+    for letter in letterDict:
+        # We know that letter and letter.inSameRow are all in a row
+        currentRow = {letter} | letterDict[letter].inSameRow
+        
+        # We see if currentRow has any common letters with any entry of rows
+        placed = False
+        for row in rows:
+            # If so, then 'currentRow' is in row with 'row' so update 'row'
+            if len(currentRow & row) > 0:
+                row |= currentRow
+                placed = True
+        # Otherwise currentRow becomes its own new row
+        if placed == False:
+            rows.append(currentRow)
+
+    # Now that rows is complete, fix letterDict
+    for letter in letterDict:
+        for row in rows:
+            if letter in row:
+                letterDict[letter].inSameRow = row - {letter}
+    
+# Mutatingly changes letterDic so that all letters in same col are listed
+# (See consolidateRowColParners for more in-depth explanation)
+def consolidateColPartners(letterDict):
+    # This will hold all known cols temporarily
+    cols = []
+    
+    # Update cols list
+    for letter in letterDict:
+        # We know that letter and letter.inSameCol are all in a col
+        currentCol = {letter} | letterDict[letter].inSameCol
+        
+        # We see if currentCol has any common letters with any entry of cols
+        placed = False
+        for col in cols:
+            # If so, then 'currentCol' is in column with 'col' so update 'col'
+            if len(currentCol & col) > 0:
+                col |= currentCol
+                placed = True
+        # Otherwise currentCol becomes its own new col
+        if placed == False:
+            cols.append(currentCol)
+
+    # Now that cols is complete, fix letterDict
+    for letter in letterDict:
+        for col in cols:
+            if letter in col:
+                letterDict[letter].inSameCol = col - {letter}
+    
+    
+   
+
+def main():
+    letterDict = makeEmptyLetterDict()
+    letterDict['A'].inSameRow = {'B'}
+    letterDict['B'].inSameRow = {'C','D'}
+    letterDict['D'].inSameRow = {'A','E'}
+    letterDict['G'].inSameRow = {'H','I'}
+    letterDict['I'].inSameRow = {'G','J'}
+    letterDict['Z'].inSameRow = {'X'}
+    consolidateRowColPartners(letterDict)
+
+main()
+
+
+
+
+
+
+
+
+
 # Finds pairs that must be in rectangles or in rows / columns
-# Adds column Partners to letterDict (mutates letterDict)
+# Adds row and column partners to letterDict (mutates letterDict)
+# Returns rowsOrCols, a set of strings that appear either in rows or cols
 def findOrderedRowsCols(digraphMap, letterDict):
     rowsOrCols = findSimpleRowsOrCols(digraphMap)
-
+    
     for key in digraphMap:
         value = digraphMap[key]
         revdValue = value.reverse()
@@ -89,17 +177,12 @@ def findOrderedRowsCols(digraphMap, letterDict):
                 # Using fact that if BA -> DC then AB -> CD no matter what
                 revdDigraph3 = digraphMap[revdValue]
                 digraph3 = revdDigraph3.reverse()
-    
-            # Check for digraphs in rectanlge (AB -> CD -> AB)
-            if digraph1 == digraph3:
-                
-                # Then A and D are in column, and B and C are in column
-                letterDict[digraph1.let1].inSameCol.add(digraph2.let2)
-                letterDict[digraph1.let2].inSameCol.add(digraph2.let1)
-            
+
+            dealWithRectangles(digraph1, digraph2, digraph3, letterDict)
+
             # Check for letters in same row/col (AB -> CD -> EA) then row/col 
             # BDACE or (AB -> CD -> BE) then row/col ACBDE
-            elif digraph3.let2 == digraph1.let1:
+            if digraph3.let2 == digraph1.let1:
                 rowsOrCols.add(digraph1.let2 + digraph2.let2 + 
                                 digraph1.let1 + digraph2.let1 + digraph3.let1)
             elif digraph3.let1 == digraph1.let2:
@@ -134,6 +217,23 @@ def findSimpleRowsOrCols(digraphMap):
     rowsOrCols = set(combineRowsCols(rowsOrCols))
     
     return rowsOrCols
+
+# If digraphs are in rectangle, updates row and column partners
+def dealWithRectangles(digraph1, digraph2, digraph3, letterDict):
+    # Check for digraphs in rectanlge (AB -> CD -> AB)
+    if digraph1 == digraph3:
+                
+        # Then A and D are in column, and B and C are in column
+        letterDict[digraph1.let1].inSameCol.add(digraph2.let2)
+        letterDict[digraph2.let2].inSameCol.add(digraph1.let1)
+        letterDict[digraph1.let2].inSameCol.add(digraph2.let1)
+        letterDict[digraph2.let1].inSameCol.add(digraph1.let2)
+
+        # Also A and C are in row, B and D are in row
+        letterDict[digraph1.let1].inSameCol.add(digraph2.let1)
+        letterDict[digraph2.let1].inSameCol.add(digraph1.let1)
+        letterDict[digraph1.let2].inSameCol.add(digraph2.let2)
+        letterDict[digraph2.let2].inSameCol.add(digraph1.let2)
 
 
 
