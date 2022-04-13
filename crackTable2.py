@@ -552,12 +552,17 @@ def indexOf1stLetterAlphabetically(row):
 
 
 def main():
-    '''
+
     plaintext = 'EX AM PL EA QU IC KB RO WN FO XI UM PS OV ER TH EL AZ YD OG AB'
-    ciphertext = 'CZ BL LM AB RQ HD GE TM XM IL YH RP NU LY BU SI AP EV DI MI BC'
+    ciphertext = encryptDecrypt.encDecPlayfair(plaintext, 'ABCDE')
+    print(ciphertext)
     print(crackKeyTable(plaintext, ciphertext))
-'''
-    
+    print(encryptDecrypt.encDecPlayfair(plaintext, 'ABCDEFGHIKQRS'))
+    # This is wrong, it has one row out of order, where is legality check
+    # failing?
+
+
+    input('press to continue')
     plaintext = '''This is a test 
 I really hope it works are there enough letters I'm going to keep writing
 because right now I just want to know if the program is correct not
