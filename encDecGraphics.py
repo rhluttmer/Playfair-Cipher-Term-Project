@@ -2,16 +2,16 @@ from cmu_cs3_graphics import *
 import encryptDecrypt
 
 class Button(object):
-    def __init__(self, cx, cy, width, height, label):
+    def __init__(self, cx, cy, width, height, label, use):
         self.cx = cx
         self.cy = cy
         self.width = width
         self.height = height
         self.label = label
-        self.on = False
+        self.hovering = False
+        self.on = True
+        self.use = use
 
-d1 = Button(10, 10, 10, 10, 'hello')
-print(d1)
 ########################################################
 #                      Model
 ########################################################
@@ -19,10 +19,14 @@ print(d1)
 def onAppStart(app):
     app.introVisible = True
     app.gridVisible = False
+    app.encInstructsVisible = False
     app.background = 'mintCream'
 
     initializeGridVars(app)
-    initializeIntoButtonVars(app)
+    initializeButtons(app)
+
+    app.message = ''
+    app.keyword = ''
 
 
 def initializeGridVars(app):
@@ -33,16 +37,35 @@ def initializeGridVars(app):
     app.gridLeft = app.margin
     app.gridTop = app.height / 2 - app.gridDim / 2
 
-def initializeIntoButtonVars(app):
+def initializeButtons(app):
     app.buttons = []
+    app.buttonWidth = min(3 * app.boxDim, app.width / 4.2)
+    app.buttonHeight = app.boxDim
+    width, height = app.buttonWidth, app.buttonHeight
     
-    cx = app.width / 4
-    cy = app.height * 3/4
-    width = 3 * app.boxDim
-    height = app.boxDim
-    label = 'Encrypt'
-    app.encButton = Button(cx, cy, width, height, label)
+    # Encrypt button
+    app.encButton = Button(app.width / 4, app.height * 3/4, width, height, 
+                           'Encrypt', 'intro')
     app.buttons.append(app.encButton)
+
+    cy = app.height * 1/3
+    # Enter message button for use in encryption
+    app.enterMessageButton = Button(app.width / 4, cy, width, 
+                                    height, 'Enter message', 'encInstructions')
+    app.enterKeyButton = Button(app.width / 2, cy, width, 
+                                height, 'Enter keyword', 'encInstructions')
+    app.submitMessageKeyButton = Button(app.width * 3/4, cy, width, 
+                                        height, 'Start encryption', 
+                                        'encInstructions')
+    cy = app.height * 2/3
+    app.defaultMessageKeyButton = Button(app.width * 0.5, cy, width, 
+                                         height, 'Use defaults', 
+                                         'encInstructions')
+    
+    app.buttons.extend([app.enterMessageButton, app.enterKeyButton,
+                       app.submitMessageKeyButton, app.defaultMessageKeyButton])
+
+
     
 
 
@@ -62,7 +85,49 @@ def getCellBounds(app, row, col):
 
 
 def onMousePress(app, mouseX, mouseY):
-    app.gridVisible = not app.gridVisible
+    if mouseInButton(mouseX, mouseY, app.encButton):
+        app.introVisible = False
+        app.encInstructsVisible = True
+    elif (mouseInButton(mouseX, mouseY, app.enterMessageButton) and
+          app.encInstructsVisible):
+        app.message = app.getTextInput('Please enter your message.')
+        app.enterMessageButton.on = False
+    elif (mouseInButton(mouseX, mouseY, app.enterMessageButton) and
+          app.encInstructsVisible):
+        app.key = app.getTextInput('Please enter the keyword.')
+    elif (mouseInButton(mouseX, mouseY, app.enterMessageButton) and
+          app.encInstructsVisible):
+          startEncryption(app)
+
+
+
+def onMouseMove(app, mouseX, mouseY):
+    for button in app.buttons:
+        if not button.on:
+            continue
+        elif mouseInButton(mouseX, mouseY, button):
+            button.hovering = True
+        else:
+            button.hovering = False
+    
+def mouseInButton(mouseX, mouseY, button):
+    if not button.on:
+        return False
+
+    left = button.cx - button.width / 2
+    right = button.cx + button.width / 2
+    top = button.cy - button.height / 2
+    bottom = button.cy + button.height / 2
+    return left <= mouseX <= right and top <= mouseY <= bottom
+
+
+def startEncryption(app):
+    
+    
+    pass
+
+    # keytext = app.getTextInput('Enter your message')
+
 
 
 ########################################################
@@ -75,6 +140,11 @@ def redrawAll(app):
     
     if app.gridVisible == True:
         drawGrid(app)
+    
+    if app.encInstructsVisible == True:
+        drawEncryptionInstructions(app)
+    
+    drawButtons(app)
 
 # Draws the first screen the user sees
 def drawIntroScreen(app):
@@ -89,25 +159,49 @@ def drawIntroScreen(app):
     textHeight /= 2
     drawLabel(text, cx, cy, size = textHeight)
 
-    drawIntroButtons(app)
 
 
 # Draws the buttons on the intro screen 
-def drawIntroButtons(app):
+def drawButtons(app):
     for button in app.buttons:
-        if button.on:
-            fill = 'black'
-            textCol = app.background
-        else:
-            fill = None
-            textCol = 'black'
+        if ((button.use == 'intro' and app.introVisible) or
+            (button.use == 'encInstructions' and app.encInstructsVisible)): 
+            if button.hovering:
+                fill = 'black'
+                textCol = app.background
+            else:
+                fill = None
+                textCol = 'black'
 
-        drawRect(button.cx, button.cy, button.width, button.height, 
-                 align = 'center', fill = fill, border = 'black')
-        labelSize = button.height / 2
-        drawLabel(button.label, button.cx, button.cy, size = labelSize, fill = textCol)
+            drawRect(button.cx, button.cy, button.width, button.height, 
+                    align = 'center', fill = fill, border = 'black')
+            labelSize = 1.5 * button.width / len(button.label)
+            drawLabel(button.label, button.cx, button.cy, 
+                      size = labelSize, fill = textCol)
 
     
+# Draws the instructions for encryption
+def drawEncryptionInstructions(app):
+    # Intro message
+    text = 'Encryption'
+    cx = app.width / 2
+    textHeight = min(30, app.width / len(text))
+    cy = app.margin + 0.5*textHeight
+    drawLabel(text, cx, cy, size = textHeight)
+    
+    cy = app.height * 1/3 - .75 * app.buttonHeight
+    text = 'Please enter your message and keywords and then click start.'
+    textHeight = min(textHeight / 2 , 2*app.width / len(text))
+    drawLabel(text, cx, cy, size = textHeight)
+
+    cy = app.height * 2/3 - 0.75 * app.buttonHeight
+    text = 'Or if you prefer, click below to use the default message and key.'
+    drawLabel(text, cx, cy, size = textHeight)
+
+    # drawEncryptionButtons(app)
+
+
+
 
 # Draws the 5 x 5 encryption grid (without letters)
 def drawGrid(app):
@@ -124,4 +218,4 @@ def drawGrid(app):
 
 
 
-runApp(800, 400)
+runApp(400, 400)
