@@ -1,5 +1,6 @@
 from cmu_cs3_graphics import *
 import encryptDecrypt
+import string
 
 class Button(object):
     def __init__(self, cx, cy, width, height, label, use):
@@ -19,14 +20,21 @@ class Button(object):
 def onAppStart(app):
     app.introVisible = True
     app.gridVisible = False
+    app.encrypting = False
     app.encInstructsVisible = False
-    app.background = 'mintCream'
+    app.processMessageInstructsVisible = False
 
+
+    app.background = 'mintCream'
+    
     initializeGridVars(app)
     initializeButtons(app)
+    initializeMessageVars(app)
+    initializeTextVars(app)
 
-    app.message = ''
-    app.keyword = ''
+
+    
+    
 
 
 def initializeGridVars(app):
@@ -36,6 +44,8 @@ def initializeGridVars(app):
     app.margin = 10
     app.gridLeft = app.margin
     app.gridTop = app.height / 2 - app.gridDim / 2
+
+    app.keyTable = None
 
 def initializeButtons(app):
     app.buttons = []
@@ -61,14 +71,29 @@ def initializeButtons(app):
     app.defaultMessageKeyButton = Button(app.width * 0.5, cy, width, 
                                          height, 'Use defaults', 
                                          'encInstructions')
-    
+    app.submitMessageKeyButton.on = False
     app.buttons.extend([app.enterMessageButton, app.enterKeyButton,
                        app.submitMessageKeyButton, app.defaultMessageKeyButton])
 
+def initializeMessageVars(app):
+    app.plaintext = ''
+    app.key = ''
+    app.ciphertext = ''
+    app.defaultPlaintext = 'This is a secret message to encrypt. Enjoy.'
+    app.defaultKey = 'Playfair'
+    app.defaultCiphertext = encryptDecrypt.encDecPlayfair(app.defaultPlaintext, 
+                                                          app.defaultKey)
 
+def initializeTextVars(app):
+    app.font = 'monospace'
+    app.fontWidthToHeightRatio = 0.6
+    app.fontSize = app.height / 25
+    app.headingCx = app.width / 2
+    app.headingHeight = 2 * app.fontSize
+    app.headingCy = app.margin + 0.5 * app.headingHeight
+    app.inputColor = 'purple'
     
-
-
+                                  
 
 # Based on Lecture 3 Animations Case Studies Notes
 # Returns left, top of box in given row and col
@@ -90,15 +115,19 @@ def onMousePress(app, mouseX, mouseY):
         app.encInstructsVisible = True
     elif (mouseInButton(mouseX, mouseY, app.enterMessageButton) and
           app.encInstructsVisible):
-        app.message = app.getTextInput('Please enter your message.')
-        app.enterMessageButton.on = False
-    elif (mouseInButton(mouseX, mouseY, app.enterMessageButton) and
+        app.plaintext = app.getTextInput('Please enter your message.')
+        if (app.plaintext != ''): app.enterMessageButton.on = False
+        if app.key != '' and app.plaintext != '':
+            app.submitMessageKeyButton.on = True
+    elif (mouseInButton(mouseX, mouseY, app.enterKeyButton) and
           app.encInstructsVisible):
         app.key = app.getTextInput('Please enter the keyword.')
-    elif (mouseInButton(mouseX, mouseY, app.enterMessageButton) and
+        if (app.key != ''): app.enterKeyButton.on = False
+        if app.key != '' and app.plaintext != '':
+            app.submitMessageKeyButton.on = True
+    elif (mouseInButton(mouseX, mouseY, app.submitMessageKeyButton) and
           app.encInstructsVisible):
           startEncryption(app)
-
 
 
 def onMouseMove(app, mouseX, mouseY):
@@ -120,19 +149,39 @@ def mouseInButton(mouseX, mouseY, button):
     bottom = button.cy + button.height / 2
     return left <= mouseX <= right and top <= mouseY <= bottom
 
+def onKeyPress(app, key):
+    if key == 'g':
+        app.plaintext = 'How are you doing?'
+        app.key = 'computer'
+        app.introVisible = False
+        app.gridVisible = True
+        app.encInstructionsVisible = False
+        startEncryption(app)
+    
+    if key == 'p':
+        app.plaintext = app.defaultPlaintext + 'more letters here for length'
+        app.key = app.defaultKey
+        app.introVisible = False
+        startEncryption(app)
 
 def startEncryption(app):
+    app.encrypting = True
+    app.encInstructsVisible = False
+
+    app.processMessageInstructsVisible = True
     
+    # fillGridExplanation(app)
+    
+
     
     pass
-
-    # keytext = app.getTextInput('Enter your message')
 
 
 
 ########################################################
 #                      View
 ########################################################
+
 
 def redrawAll(app):
     if app.introVisible:
@@ -144,63 +193,126 @@ def redrawAll(app):
     if app.encInstructsVisible == True:
         drawEncryptionInstructions(app)
     
+    if app.processMessageInstructsVisible:
+        processMessageExplanation(app)
+    
     drawButtons(app)
 
 # Draws the first screen the user sees
 def drawIntroScreen(app):
     # Intro message
-    text = 'Welcome to the Playfair Cipher Program!'
-    cx = app.width / 2
-    cy = app.height / 7
-    textHeight = 2*app.width / len(text)
-    drawLabel(text, cx, cy, size = textHeight)
-    cy = cy + 2 * textHeight
+    text = 'Playfair Cipher!'
+    drawHeading(app, text)
+    
+    topY = app.height / 2
     text = 'Click on one of the buttons below to get started'
-    textHeight /= 2
-    drawLabel(text, cx, cy, size = textHeight)
+    drawTextbox(app, text, topY)
 
-
-
-# Draws the buttons on the intro screen 
+# Draws the button
 def drawButtons(app):
     for button in app.buttons:
         if ((button.use == 'intro' and app.introVisible) or
             (button.use == 'encInstructions' and app.encInstructsVisible)): 
-            if button.hovering:
-                fill = 'black'
-                textCol = app.background
-            else:
+            if button.hovering or not button.on:
                 fill = None
                 textCol = 'black'
+            else:
+                fill = 'black'
+                textCol = app.background
 
             drawRect(button.cx, button.cy, button.width, button.height, 
                     align = 'center', fill = fill, border = 'black')
             labelSize = 1.5 * button.width / len(button.label)
             drawLabel(button.label, button.cx, button.cy, 
-                      size = labelSize, fill = textCol)
+                      size = labelSize, fill = textCol, font = app.font)
 
-    
 # Draws the instructions for encryption
 def drawEncryptionInstructions(app):
     # Intro message
     text = 'Encryption'
     cx = app.width / 2
-    textHeight = min(30, app.width / len(text))
+    textHeight = 2 * app.fontSize
     cy = app.margin + 0.5*textHeight
-    drawLabel(text, cx, cy, size = textHeight)
-    
-    cy = app.height * 1/3 - .75 * app.buttonHeight
+    #drawLabel(text, app.headingCx, app.headingCy, size = textHeight, font = app.font)
+    drawHeading(app, text)
+
+    leftX = app.margin
+    topY = app.height * 1/3 -  app.buttonHeight - 0.5 * app.fontSize
     text = 'Please enter your message and keywords and then click start.'
-    textHeight = min(textHeight / 2 , 2*app.width / len(text))
-    drawLabel(text, cx, cy, size = textHeight)
+    drawTextbox(app, text, topY)
 
-    cy = app.height * 2/3 - 0.75 * app.buttonHeight
+    topY = app.height * 2/3 -  app.buttonHeight - 0.5* app.fontSize
     text = 'Or if you prefer, click below to use the default message and key.'
-    drawLabel(text, cx, cy, size = textHeight)
+    drawTextbox(app, text, topY)
 
-    # drawEncryptionButtons(app)
+# Explains how plaintext is prepared for encryption
+def processMessageExplanation(app):
+    drawHeading(app, 'Processing Message')
+
+    text = 'Entered Message: '
+    topY = app.margin + app.headingHeight + 0.5 * app.fontSize
+    drawTextbox(app, text, topY)
+    
+    widthOfText = len(text) * app.fontSize * app.fontWidthToHeightRatio
+    message = app.plaintext if (app.encrypting) else app.ciphertext
+    width = app.width - widthOfText
+    drawWithElipses(app, message, topY, left = widthOfText + app.margin, 
+                    width = width, color = app.inputColor)
+    
+    pass
+
+def fillGridExplanation(app):
+    app.gridVisible = True
 
 
+    # Data needed for making grid
+    key = app.key
+    strippedKey = encryptDecrypt.removeNonAlphas(key.upper())
+    keyWithoutJ = strippedKey.replace('J', 'I')
+    wholeToPlace = keyWithoutJ + string.ascii_uppercase.replace('I', 'J')
+    wholeToPlace = encryptDecrypt.removeStringDuplicates(wholeToPlace)
+    restToPlace = wholeToPlace[len(keyWithoutJ):]
+    app.keyTable = encryptDecrypt.makeKeyTable(key)
+    
+
+    
+
+# Wraps text in a label around
+def drawTextbox(app, text, top, left = None, width = None, fontSize = None, 
+                color = 'black'):
+    if (left == None): left = app.margin
+    if (width == None): width = app.width
+    if (fontSize == None): fontSize = app.fontSize
+    widthToHeightRatio = app.fontWidthToHeightRatio
+    fontWidth = fontSize * widthToHeightRatio
+    blockingLength = int(width / fontWidth)
+    
+    while (len(text) > 0):
+        if len(text) <= blockingLength:
+            firstBlock = text
+            text = []
+        else:
+            firstBlock = text[:blockingLength] 
+            while firstBlock[-1] != ' ':
+                firstBlock = firstBlock[:-1]
+            text = text[len(firstBlock): ]
+        drawLabel(firstBlock, left, top, align='left-top', size=fontSize, 
+                  font=app.font, fill = color)
+        
+        top += 1.15*fontSize
+
+def drawWithElipses(app, text, top, left = None, width = None, fontSize = None,
+                    color = 'black'):
+    if (left == None): left = app.margin
+    if (width == None): width = app.width
+    if (fontSize == None): fontSize = app.fontSize
+
+    widthToHeightRatio = app.fontWidthToHeightRatio
+    fontWidth = fontSize * widthToHeightRatio
+    blockingLength = int(width / fontWidth)
+    text = text[:blockingLength - 3] + '...'
+    drawLabel(text, left, top, align='left-top', size=fontSize, 
+                  font=app.font, fill = color)
 
 
 # Draws the 5 x 5 encryption grid (without letters)
@@ -212,10 +324,18 @@ def drawGrid(app):
             fill = None
             drawRect(left, top, app.boxDim, app.boxDim, fill=fill, 
                      borderWidth=1, border='black')
+            
+            if app.keyTable != None:
+                letter = app.keyTable[row][col]
+                cx, cy = left + app.boxDim / 2, top + app.boxDim / 2
+                drawLabel(letter, cx, cy, size = app.boxDim, font = app.font)
+
+# Puts the heading at top of page
+def drawHeading(app, text):
+    drawLabel(text, app.headingCx, app.headingCy, size = app.headingHeight, 
+              font = app.font)
 
 
 
 
-
-
-runApp(400, 400)
+runApp(600, 400)

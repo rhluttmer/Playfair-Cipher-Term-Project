@@ -18,8 +18,12 @@ Still need to make this more user proof
 import string
 import classes
 
+
+
+
 # Takes a message, key, and mode (encrypt or decrypt) and returns newMessage
 def encDecPlayfair(plaintext, key, mode='encrypt'):
+    
     # Make the required table using the keyword
     keyTable = makeKeyTable(key)
     
@@ -44,7 +48,7 @@ def makeKeyTable(key):
     keyTable = [[0]*tableDim for _ in range(tableDim)]
 
     # This is all letters that will need to go in table
-    toPlace = key.upper() + string.ascii_uppercase
+    toPlace = removeNonAlphas(key.upper()) + string.ascii_uppercase
     
     # Since j's and i's are interchangable, only want i's
     toPlace = toPlace.replace('J', 'I')
@@ -63,7 +67,7 @@ def makeKeyTable(key):
             keyTable[row][col] = toPlace[0]
             toPlace = toPlace[1:]
     
-
+    
     return keyTable
 
 
