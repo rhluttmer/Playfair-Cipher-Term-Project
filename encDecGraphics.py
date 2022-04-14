@@ -33,8 +33,6 @@ def onAppStart(app):
     initializeTextVars(app)
 
 
-    
-    
 
 
 def initializeGridVars(app):
@@ -92,6 +90,8 @@ def initializeTextVars(app):
     app.headingHeight = 2 * app.fontSize
     app.headingCy = app.margin + 0.5 * app.headingHeight
     app.inputColor = 'purple'
+    app.lineSpace = 1.15
+    app.parSpace = 0.5 * app.fontSize
     
                                   
 
@@ -249,17 +249,73 @@ def drawEncryptionInstructions(app):
 def processMessageExplanation(app):
     drawHeading(app, 'Processing Message')
 
+    # Line shows entered message in black and then message in purple
     text = 'Entered Message: '
     topY = app.margin + app.headingHeight + 0.5 * app.fontSize
     drawTextbox(app, text, topY)
-    
     widthOfText = len(text) * app.fontSize * app.fontWidthToHeightRatio
     message = app.plaintext if (app.encrypting) else app.ciphertext
     width = app.width - widthOfText
     drawWithElipses(app, message, topY, left = widthOfText + app.margin, 
                     width = width, color = app.inputColor)
+
+    # Explain why and then print upper case, only letters, message
+    topY += app.fontSize + app.parSpace # To end up below previous line
+    text = ('Before we can start encryption, we need to prepare the message. '
+            + 'First, we must make everything uppercase and remove all '
+            +'non-letter characters. This yields:')
+    lines = drawTextbox(app, text, topY)
+    topY += lines * app.lineSpace * app.fontSize + app.parSpace
+    uppercaseMessage = encryptDecrypt.removeNonAlphas(app.plaintext.upper())
+    drawWithElipses(app, uppercaseMessage, topY, color = app.inputColor)
+
+    # Explain why and then display message split into pairs of two with all 
+    # J's turned into I's
+    topY += app.fontSize + app.parSpace
+    text = ('The playfair cipher uses a 5x5 grid, so instead of using our 26' +
+            ' letter alphabet, we will treat all J’s like I’s to have 25 ' +
+            'letters. Also, the cipher encrypts digraphs, or pairs of letters,'
+            ' so we will split the message up into pairs:')
+    lines = drawTextbox(app, text, topY)
+    topY += lines * app.lineSpace * app.fontSize + app.parSpace
+    spacedMessage = putSpacesIn(uppercaseMessage)
+    drawWithElipses(app, spacedMessage, topY, color = app.inputColor)
+    # TODO: Make it so that all J's turned into I's are colored
+
+    # Explain why and then display the final set of digraphs ready for encrypt
+    # Left off here
+
+
+
+
+    messageByDigraph = turnDigraphListToString(app)
+    
     
     pass
+
+def putSpacesIn(message):
+    result = ''
+    while len(message) > 1:
+        result += message[:2] + ' '
+        message = message[2:]
+    if len(message) == 1:
+        result += message
+    else:
+        result = result[:-1] # to remove ending space
+
+    return result
+
+def turnDigraphListToString(app):
+    digraphList = encryptDecrypt.makeDigraphL(app.plaintext)
+    result = ''
+    for digraph in digraphList:
+        result += digraph.let1 + digraph.let2 + ' '
+
+    # To remove last space
+    result = result[:-1]
+
+    return result
+
 
 def fillGridExplanation(app):
     app.gridVisible = True
@@ -277,7 +333,7 @@ def fillGridExplanation(app):
 
     
 
-# Wraps text in a label around
+# Wraps text in a label around, returns how many lines long it was
 def drawTextbox(app, text, top, left = None, width = None, fontSize = None, 
                 color = 'black'):
     if (left == None): left = app.margin
@@ -287,6 +343,7 @@ def drawTextbox(app, text, top, left = None, width = None, fontSize = None,
     fontWidth = fontSize * widthToHeightRatio
     blockingLength = int(width / fontWidth)
     
+    lines = 0
     while (len(text) > 0):
         if len(text) <= blockingLength:
             firstBlock = text
@@ -299,7 +356,11 @@ def drawTextbox(app, text, top, left = None, width = None, fontSize = None,
         drawLabel(firstBlock, left, top, align='left-top', size=fontSize, 
                   font=app.font, fill = color)
         
-        top += 1.15*fontSize
+        top += app.lineSpace * fontSize
+        lines += 1
+        
+    
+    return lines
 
 def drawWithElipses(app, text, top, left = None, width = None, fontSize = None,
                     color = 'black'):

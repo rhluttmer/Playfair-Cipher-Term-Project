@@ -1,0 +1,22 @@
+
+
+Run 1: Correct
+plaintext = '''This is a test 
+I really hope it works are there enough letters I'm going to keep writing
+because right now I just want to know if the program is correct not
+necessarily how fast it is, and ihave a feeling that more letters will help.
+'''
+ciphertext = encryptDecrypt.encDecPlayfair(plaintext, 'object')
+Returned: [['O', 'B', 'I', 'E', 'C'], ['T', 'A', 'D', 'F', 'G'], 
+['H', 'K', 'L', 'M', 'N'], ['P', 'Q', 'R', 'S', 'U'], ['V', 'W', 'X', 'Y', 'Z']]
+Took only several seconds
+
+
+
+Run 2: Sometimes correct?
+plaintext = 'EX AM PL EA QU IC KB RO WN FO XI UM PS OV ER TH EL AZ YD OG AB'
+ciphertext = encryptDecrypt.encDecPlayfair(plaintext, 'ABCDE')
+Returned: [['A', 'B', 'C', 'D', 'E'], ['F', 'G', 'H', 'I', 'K'], 
+['L', 'M', 'N', 'O', 'P'], ['Q', 'R', 'S', 'T', 'U'], ['V', 'W', 'X', 'Y', 'Z']]
+Happened within 10 seconds
+But sometimes it returns with one row out of order?

@@ -29,6 +29,7 @@ def crackKeyTable(plaintext, ciphertext):
     # Make a dictionary that maps letters to letter instances that store
     # all the information about how the letter encrypts / decrypts
     letterDict, rowSet, colSet, rowOrColSet = createAndPopulateLetterDict(digraphMap)
+    print(rowSet, colSet, rowOrColSet)
     
     board = [[0]*5 for _ in range(boardDim)]
     
@@ -553,27 +554,17 @@ def indexOf1stLetterAlphabetically(row):
 
 def main():
 
-    plaintext = 'EX AM PL EA QU IC KB RO WN FO XI UM PS OV ER TH EL AZ YD OG AB'
-    ciphertext = encryptDecrypt.encDecPlayfair(plaintext, 'ABCDE')
-    print(ciphertext)
+    plaintext = 'This is another test i wonderr if it will work'
+    ciphertext = encryptDecrypt.encDecPlayfair(plaintext, 'computer')
+    
     print(crackKeyTable(plaintext, ciphertext))
-    print(encryptDecrypt.encDecPlayfair(plaintext, 'ABCDEFGHIKQRS'))
+    
     # This is wrong, it has one row out of order, where is legality check
     # failing?
 
 
     input('press to continue')
-    plaintext = '''This is a test 
-I really hope it works are there enough letters I'm going to keep writing
-because right now I just want to know if the program is correct not
-necessarily how fast it is, and ihave a feeling that more letters will help.
-'''
-
-    ciphertext = encryptDecrypt.encDecPlayfair(plaintext, 'object')
-    print(ciphertext, 'cipher')
-
     
-    print(crackKeyTable(plaintext, ciphertext), 'result')
    
 
 main()
