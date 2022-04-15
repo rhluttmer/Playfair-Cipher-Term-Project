@@ -1,3 +1,6 @@
+# Next order of business: add button to explanation page
+# The next button isn't showing up right now
+
 from cmu_cs3_graphics import *
 import encryptDecrypt
 import string
@@ -21,9 +24,16 @@ def onAppStart(app):
     app.introVisible = True
     app.gridVisible = False
     app.encrypting = False
+
     app.encInstructsVisible = False
     app.processMessageInstructsVisible = False
-
+    app.makeGridInstructsVisible = False
+    app.digraphEncInstructsVisible = False
+    app.encSummaryVisible = False
+    app.nextButtonVisible = False
+    app.backButtonVisible = False
+    
+    
 
     app.background = 'mintCream'
     
@@ -51,11 +61,26 @@ def initializeButtons(app):
     app.buttonHeight = app.boxDim
     width, height = app.buttonWidth, app.buttonHeight
     
-    # Encrypt button
+    initializeIntroButtons(app)
+    initializeEncryptButtons(app)
+    initializeBackAndNextButtons(app)
+    
+    
+    
+
+# Make the buttons that appear on the intro screen
+def initializeIntroButtons(app):
+    width, height = app.buttonWidth, app.buttonHeight
+    
+    # Encrypt button on intro screen
     app.encButton = Button(app.width / 4, app.height * 3/4, width, height, 
                            'Encrypt', 'intro')
     app.buttons.append(app.encButton)
 
+# Make the buttons that appear on the first encryption screen
+def initializeEncryptButtons(app):
+    width, height = app.buttonWidth, app.buttonHeight
+    
     cy = app.height * 1/3
     # Enter message button for use in encryption
     app.enterMessageButton = Button(app.width / 4, cy, width, 
@@ -72,6 +97,26 @@ def initializeButtons(app):
     app.submitMessageKeyButton.on = False
     app.buttons.extend([app.enterMessageButton, app.enterKeyButton,
                        app.submitMessageKeyButton, app.defaultMessageKeyButton])
+
+def initializeBackAndNextButtons(app):
+    # Make these buttons smaller than the defaults
+    backNextHeight  = 0.5 * app.buttonHeight 
+    backNextWidth = 0.75 * app.buttonWidth
+    
+    cy = app.height - 0.6 * backNextHeight
+    cx = app.width - 0.6 * backNextWidth
+    app.nextButton = Button(cx, cy, backNextWidth, backNextHeight, 
+                            'Next', 'next')
+    app.buttons.append(app.nextButton)
+
+    
+    cx = 0.6 * backNextWidth
+    app.backButton = Button(cx, cy, backNextWidth, backNextHeight, 
+                            'Back', 'back')
+    app.buttons.append(app.backButton)
+
+
+
 
 def initializeMessageVars(app):
     app.plaintext = ''
@@ -109,25 +154,79 @@ def getCellBounds(app, row, col):
 ########################################################
 
 
+#-------------------onMousePress and helpers-----------------
+
 def onMousePress(app, mouseX, mouseY):
+    encButtonClicked(mouseX, mouseY, app)
+    
+    # Encryption screen buttons
+    enterMessageButtonClicked(mouseX, mouseY, app)
+    enterKeyButtonClicked(mouseX, mouseY, app)
+    submitMessageKeyButtonClicked(mouseX, mouseY, app)
+    defaultMessageKeyButtonClicked(mouseX, mouseY, app)
+    
+    nextButtonClicked(mouseX, mouseY, app)
+
+# Checks if click was in encryption button, and starts if encryption if so
+def encButtonClicked(mouseX, mouseY, app):
     if mouseInButton(mouseX, mouseY, app.encButton):
         app.introVisible = False
         app.encInstructsVisible = True
-    elif (mouseInButton(mouseX, mouseY, app.enterMessageButton) and
+
+# Checks if click was in the enterMessage button, and if so opens window for
+# user input.
+def enterMessageButtonClicked(mouseX, mouseY, app):
+    if (mouseInButton(mouseX, mouseY, app.enterMessageButton) and
           app.encInstructsVisible):
         app.plaintext = app.getTextInput('Please enter your message.')
         if (app.plaintext != ''): app.enterMessageButton.on = False
         if app.key != '' and app.plaintext != '':
             app.submitMessageKeyButton.on = True
-    elif (mouseInButton(mouseX, mouseY, app.enterKeyButton) and
+
+# Checks if click was in the enterKey button, and if so opens window for
+# user input.
+def enterKeyButtonClicked(mouseX, mouseY, app):
+    if (mouseInButton(mouseX, mouseY, app.enterKeyButton) and
           app.encInstructsVisible):
         app.key = app.getTextInput('Please enter the keyword.')
         if (app.key != ''): app.enterKeyButton.on = False
         if app.key != '' and app.plaintext != '':
             app.submitMessageKeyButton.on = True
-    elif (mouseInButton(mouseX, mouseY, app.submitMessageKeyButton) and
+    
+# Moves on to explaining message processing if message and key are submitted
+def submitMessageKeyButtonClicked(mouseX, mouseY, app):  
+    if (mouseInButton(mouseX, mouseY, app.submitMessageKeyButton) and
           app.encInstructsVisible):
           startEncryption(app)
+
+# Moves on to explaining message processing if user opts to use default
+def defaultMessageKeyButtonClicked(mouseX, mouseY, app):  
+    if (mouseInButton(mouseX, mouseY, app.defaultMessageKeyButton) and
+          app.encInstructsVisible):
+          app.plaintext = app.defaultPlaintext
+          app.key = app.defaultKey
+          startEncryption(app)
+
+# Brings user to the next page when they click the next button
+def nextButtonClicked(mouseX, mouseY, app):
+    if (not mouseInButton(mouseX, mouseY, app.nextButton) or 
+        not app.nextButtonVisible):
+        return
+    
+    if app.processMessageInstructsVisible == True:
+        app.processMessageInstructsVisible = False
+        app.makeGridInstructsVisible = True
+    
+def backButtonClicked(mouseX, mouseY, app):
+    if (not mouseInButton(mouseX, mouseY, app.backButton) or 
+        not app.backButtonVisible):
+        return
+    
+    if app.processMessageInstructsVisible == True:
+        app.processMessageInstructsVisible = False
+        app.encInstructsVisible = True
+
+#---------------------onMouseMove and helpers------
 
 
 def onMouseMove(app, mouseX, mouseY):
@@ -149,6 +248,8 @@ def mouseInButton(mouseX, mouseY, button):
     bottom = button.cy + button.height / 2
     return left <= mouseX <= right and top <= mouseY <= bottom
 
+#------------------onKeyPress -------------------
+
 def onKeyPress(app, key):
     if key == 'g':
         app.plaintext = 'How are you doing?'
@@ -164,11 +265,18 @@ def onKeyPress(app, key):
         app.introVisible = False
         startEncryption(app)
 
+
+
+# Sets things to stuff TODO fix this explanation
 def startEncryption(app):
     app.encrypting = True
     app.encInstructsVisible = False
-
     app.processMessageInstructsVisible = True
+    app.nextButtonVisible = True
+    app.backButtonVisible = True
+
+
+    
     
     # fillGridExplanation(app)
     
@@ -212,7 +320,9 @@ def drawIntroScreen(app):
 def drawButtons(app):
     for button in app.buttons:
         if ((button.use == 'intro' and app.introVisible) or
-            (button.use == 'encInstructions' and app.encInstructsVisible)): 
+            (button.use == 'encInstructions' and app.encInstructsVisible) or
+            (button.use == 'next' and app.nextButtonVisible) or
+            (button.use == 'back' and app.backButtonVisible)): 
             if button.hovering or not button.on:
                 fill = None
                 textCol = 'black'
@@ -222,7 +332,15 @@ def drawButtons(app):
 
             drawRect(button.cx, button.cy, button.width, button.height, 
                     align = 'center', fill = fill, border = 'black')
-            labelSize = 1.5 * button.width / len(button.label)
+            
+            # Find font size so that label fits in width of button
+            charWidth = 0.9 * button.width / len(button.label)
+            widthSize = charWidth / app.fontWidthToHeightRatio
+            heightSize = 0.9 * button.height # So that fits in height
+
+            # Take the min
+            labelSize = min(widthSize, heightSize)
+            
             drawLabel(button.label, button.cx, button.cy, 
                       size = labelSize, fill = textCol, font = app.font)
 
@@ -258,53 +376,72 @@ def processMessageExplanation(app):
     width = app.width - widthOfText
     drawWithElipses(app, message, topY, left = widthOfText + app.margin, 
                     width = width, color = app.inputColor)
+    topY += app.lineSpace * app.fontSize + app.parSpace
 
     # Explain why and then print upper case, only letters, message
-    topY += app.fontSize + app.parSpace # To end up below previous line
     text = ('Before we can start encryption, we need to prepare the message. '
             + 'First, we must make everything uppercase and remove all '
             +'non-letter characters. This yields:')
-    lines = drawTextbox(app, text, topY)
-    topY += lines * app.lineSpace * app.fontSize + app.parSpace
     uppercaseMessage = encryptDecrypt.removeNonAlphas(app.plaintext.upper())
-    drawWithElipses(app, uppercaseMessage, topY, color = app.inputColor)
+    topY = drawExplanationPlusOneLine(app, text, uppercaseMessage, topY)
 
     # Explain why and then display message split into pairs of two with all 
     # J's turned into I's
-    topY += app.fontSize + app.parSpace
     text = ('The playfair cipher uses a 5x5 grid, so instead of using our 26' +
-            ' letter alphabet, we will treat all J’s like I’s to have 25 ' +
+            " letter alphabet, we will treat all J’s like I’s to have 25 " +
             'letters. Also, the cipher encrypts digraphs, or pairs of letters,'
             ' so we will split the message up into pairs:')
-    lines = drawTextbox(app, text, topY)
-    topY += lines * app.lineSpace * app.fontSize + app.parSpace
-    spacedMessage = putSpacesIn(uppercaseMessage)
-    drawWithElipses(app, spacedMessage, topY, color = app.inputColor)
+    spacedMessage = putSpacesInAndKillJs(uppercaseMessage)
+    topY = drawExplanationPlusOneLine(app, text, spacedMessage, topY)
     # TODO: Make it so that all J's turned into I's are colored
 
     # Explain why and then display the final set of digraphs ready for encrypt
     # Left off here
 
-
-
-
+    text = ("Finally if a pair has two of the same letter, we replace the " +
+            "second letter with an X. Also, if the last letter doesn’t have" + 
+            " a pair, we add an ‘X’ to the end (this is called padding).")
+    if len(uppercaseMessage) % 2 == 1:
+        portion = 'we did'    
+    else:
+        portion =  " we didn't "   
+    text += f'In your case, {portion} have to pad. So we get: '
     messageByDigraph = turnDigraphListToString(app)
+    topY = drawExplanationPlusOneLine(app, text, messageByDigraph, topY)
+
+    
+# Puts the explanation in a textbox and then the user input in a line below
+# Returns the y-coordinate where next line should be
+def drawExplanationPlusOneLine(app, explanation, line, top):
+    lines = drawTextbox(app, explanation, top)
+    topY = top + lines * app.lineSpace * app.fontSize + app.parSpace 
+    # To end up below textbox
+    
+    drawWithElipses(app, line, topY, color = app.inputColor)
+    topY += app.lineSpace * app.fontSize + app.parSpace
+
+    return topY
+
+   
     
     
     pass
 
-def putSpacesIn(message):
+# Adds spaces to message and replaces J's with I's
+def putSpacesInAndKillJs(message):
     result = ''
     while len(message) > 1:
-        result += message[:2] + ' '
+        newPair = message[:2].replace('J', 'I')
+        result += newPair + ' '
         message = message[2:]
     if len(message) == 1:
-        result += message
+        result += message.replace('J', 'I')
     else:
         result = result[:-1] # to remove ending space
 
     return result
 
+# Turns the digraph list to a printable readable string
 def turnDigraphListToString(app):
     digraphList = encryptDecrypt.makeDigraphL(app.plaintext)
     result = ''
@@ -317,6 +454,8 @@ def turnDigraphListToString(app):
     return result
 
 
+
+# Very incomplete
 def fillGridExplanation(app):
     app.gridVisible = True
 
@@ -330,8 +469,7 @@ def fillGridExplanation(app):
     restToPlace = wholeToPlace[len(keyWithoutJ):]
     app.keyTable = encryptDecrypt.makeKeyTable(key)
     
-
-    
+   
 
 # Wraps text in a label around, returns how many lines long it was
 def drawTextbox(app, text, top, left = None, width = None, fontSize = None, 
@@ -362,16 +500,25 @@ def drawTextbox(app, text, top, left = None, width = None, fontSize = None,
     
     return lines
 
+# Makes a one line label. If text is too long, puts ... at end to indicate that
+# not the whole text is being seen
 def drawWithElipses(app, text, top, left = None, width = None, fontSize = None,
                     color = 'black'):
+    # This is to get around not being able to have app.margin as default value
     if (left == None): left = app.margin
     if (width == None): width = app.width
     if (fontSize == None): fontSize = app.fontSize
 
-    widthToHeightRatio = app.fontWidthToHeightRatio
-    fontWidth = fontSize * widthToHeightRatio
+    # How wide in pixels one character of font is
+    fontWidth = fontSize * app.fontWidthToHeightRatio
+
+    # How many characters long the line can be
     blockingLength = int(width / fontWidth)
-    text = text[:blockingLength - 3] + '...'
+
+    # Add elipses at right location if text too long
+    if len(text) > blockingLength:
+        text = text[:blockingLength - 3] + '...'
+
     drawLabel(text, left, top, align='left-top', size=fontSize, 
                   font=app.font, fill = color)
 

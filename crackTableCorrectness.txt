@@ -1,4 +1,7 @@
 
+Verdict: Correct in every case I try. Although sometimes returns unexpected
+table. But always returns a table that works.
+
 
 Run 1: Correct
 plaintext = '''This is a test 
@@ -13,10 +16,41 @@ Took only several seconds
 
 
 
-Run 2: Sometimes correct?
+Run 2: Sometimes correct? Nope always correct
 plaintext = 'EX AM PL EA QU IC KB RO WN FO XI UM PS OV ER TH EL AZ YD OG AB'
 ciphertext = encryptDecrypt.encDecPlayfair(plaintext, 'ABCDE')
 Returned: [['A', 'B', 'C', 'D', 'E'], ['F', 'G', 'H', 'I', 'K'], 
 ['L', 'M', 'N', 'O', 'P'], ['Q', 'R', 'S', 'T', 'U'], ['V', 'W', 'X', 'Y', 'Z']]
+Also:
+[['A', 'B', 'C', 'D', 'E'], ['F', 'G', 'H', 'I', 'K'], 
+['Q', 'R', 'S', 'T', 'U'], ['L', 'M', 'N', 'O', 'P'], ['V', 'W', 'X', 'Y', 'Z']]
+The returns differ between runs. Why?
+But in both cases, they are correct. The message is short enough that
+both squares encrypt and decrypt the same way for the letters in the message.
 Happened within 10 seconds
-But sometimes it returns with one row out of order?
+
+
+
+Run 3: Correct
+plaintext = 'This is another test i wonderr if it will work'
+ciphertext = encryptDecrypt.encDecPlayfair(plaintext, 'computer')
+Returned: [['C', 'O', 'M', 'P', 'U'], ['T', 'E', 'R', 'A', 'B'], 
+['D', 'F', 'G', 'H', 'I'], ['K', 'L', 'N', 'Q', 'S'], ['V', 'W', 'X', 'Y', 'Z']]
+Took a long time - over an hour, but worked
+
+
+Run 4: Incorrect? Never mind, correct: In this case, the text is short enough
+that the returned table would also generate the message. This could be correct
+because for all we know, the keyword was 'rlateibcdvfhkmgnpqsouxyzw'
+plaintext = "I'm in pain, misery, and suffering. Don't worry, not my words."
+ciphertext = encryptDecrypt.encDecPlayfair(plaintext, 'relative')
+Returned: [['R', 'L', 'A', 'T', 'E'], ['I', 'B', 'C', 'D', 'V'], 
+['F', 'H', 'K', 'M', 'G'], ['N', 'P', 'Q', 'S', 'O'], ['U', 'X', 'Y', 'Z', 'W']]
+
+
+Run 5: Correct
+plaintext = 'Dit is een zin in Nederlands om te zien of het ook in andere taalen werkt.'
+ciphertext = encryptDecrypt.encDecPlayfair(plaintext, 'blijheid')
+Returned: [['B', 'L', 'I', 'H', 'E'], ['D', 'A', 'C', 'F', 'G'], 
+['K', 'M', 'N', 'O', 'P'], ['Q', 'R', 'S', 'T', 'U'], ['V', 'W', 'X', 'Y', 'Z']]
+Took under 10 seconds

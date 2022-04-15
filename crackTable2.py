@@ -44,7 +44,7 @@ def crackKeyTable(plaintext, ciphertext):
     solution = outerBacktrack(board, rowSet, colSet, rowOrColSet, digraphMap, 
                               letterDict, lettersPlaced)
 
-    print('sol', solution)
+    print('preprocessed sol', solution)
     if solution == None:
         return "There's no solution!"
     else:
@@ -85,6 +85,7 @@ def makeDigraphMap(plaintext, ciphertext):
     
     return digraphMap
 
+
 # Creates a letter dictionary which maps letters to Letter instances
 # These instances have letters that are encrypted to, letters in same row as
 # and more info
@@ -106,6 +107,7 @@ def createAndPopulateLetterDict(digraphMap):
     rows, cols = findStrictRowsCols(letterDict, rowsOrCols)
 
     return letterDict, rows, cols, rowsOrCols
+
 
 # Finds entries in the list rowsOrCols that must either be in a row or in a co
 def findStrictRowsCols(letterDict, rowsOrCols):
@@ -195,7 +197,7 @@ def outerBacktrack(board, rowSet, colSet, rowOrColSet, digraphMap,
                                       colSet, rowOrColSet, lettersPlaced)
 
  
-# Assumes rowSet is nonempty, removes and arbitrary rowstring
+# Assumes rowSet is nonempty, removes an arbitrary rowstring
 # This function loops through all places to put rowString, sees if any work
 def checkPlaceSolveRow(board, digraphMap, letterDict, 
                        rowSet, colSet, rowOrColSet, lettersPlaced):
@@ -234,7 +236,7 @@ def checkPlaceSolveRow(board, digraphMap, letterDict,
     return None
 
 
-# Assumes colSet is nonempty, removes and arbitrary colString
+# Assumes colSet is nonempty, removes an arbitrary colString
 # This function loops through all places to put colString, sees if any work
 def checkPlaceSolveCol(board, digraphMap, letterDict, 
                        rowSet, colSet, rowOrColSet, lettersPlaced):
@@ -290,6 +292,7 @@ def canPutRowInBoard(board, boardDim, rowString, row, col, lettersPlaced):
     
     return True
 
+
 # Returns True if a col can be put in a board without changing any letters    
 def canPutColInBoard(board, boardDim, colString, row, col, lettersPlaced):
     # Temporary, should be removed once know this error won't occur
@@ -312,6 +315,7 @@ def canPutColInBoard(board, boardDim, colString, row, col, lettersPlaced):
     
     return True
 
+
 # Returns new board which is old board but with row placed at specified location
 # Before calling this, should call canPutRowInBoard to check legality
 def putInRow(board, rowString, row, col):
@@ -323,7 +327,8 @@ def putInRow(board, rowString, row, col):
         newBoard[row][(col + i) % boardDim] = rowString[i]
     
     return newBoard
-    
+
+
 # Returns new board which is old board but with col placed at specified location
 # Before calling this, should call canPutColInBoard to check legality
 def putInCol(board, colString, row, col):
@@ -350,6 +355,7 @@ def isLegalDigraphwise(board, digraphMap, lettersPlaced):
             cipherDigraph = digraphMap[plainDigraph]
             cipherLet1, cipherLet2 = cipherDigraph.let1, cipherDigraph.let2
 
+
             # If the corresponding cipher letters have been placed,
             # they must be in the same spot as the solution letters 
             if ((cipherLet1 in lettersPlaced and solLet1 != cipherLet1)
@@ -364,7 +370,7 @@ def isLegalDigraphwise(board, digraphMap, lettersPlaced):
 
 # This places all remaining letters (the ones not in row or col strings)
 def innerBacktrack(board, lastLoc, letterDict, digraphMap, lettersPlaced):
-    
+    #print('inner', board)
     boardDim = len(board)
 
     if lastLoc == (boardDim-1, boardDim-1):
@@ -479,6 +485,7 @@ def isInRow(row, letter, board):
     
     return False
 
+
 # Says whether 'letter' is in column number 'col' of board
 # Helper for isLegalLetterwise
 def isInCol(col, letter, board):
@@ -488,6 +495,7 @@ def isInCol(col, letter, board):
             return True
     
     return False
+
 
 ###########################################################################
 #                              final steps
@@ -554,18 +562,16 @@ def indexOf1stLetterAlphabetically(row):
 
 def main():
 
-    plaintext = 'This is another test i wonderr if it will work'
-    ciphertext = encryptDecrypt.encDecPlayfair(plaintext, 'computer')
+    plaintext = 'Dit is een zin in Nederlands om te zien of het ook in andere taalen werkt.'
+    ciphertext = encryptDecrypt.encDecPlayfair(plaintext, 'blijheid')
+    #print(ciphertext)
     
-    print(crackKeyTable(plaintext, ciphertext))
-    
-    # This is wrong, it has one row out of order, where is legality check
-    # failing?
+    result = crackKeyTable(plaintext, ciphertext)
+    print(result)
 
 
-    input('press to continue')
-    
-   
+
+
 
 main()
 
