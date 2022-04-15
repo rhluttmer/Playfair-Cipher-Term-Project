@@ -11,10 +11,17 @@ which order this happens)
 Then we also have a list of things that are ordered bits of rows or columns
 And we also have a set of some ordered bits that must be in rows
 
+This source was used to get ideas of what to look for to learn about
+how the letters are situated in the key grid
+(https://crypto.stackexchange.com/questions/35722/how-to-find-the-keyword-of-the-playfair-cipher-given-the-plaintext-and-the-ciph)
+
 '''
 
 
 import classes
+
+#---------Make dict and add what each letter encrypts to----------
+
 
 # Makes a dict mapping letter names to 'Letter' instances
 def makeEmptyLetterDict():
@@ -33,8 +40,11 @@ def addEncryptsTo(digraphMap, letterDict):
         encodedDigraph = digraphMap[digraph]
         letterDict[digraph.let1].encryptsTo.add(encodedDigraph.let1)
         letterDict[digraph.let2].encryptsTo.add(encodedDigraph.let2)
-    
-# Adds row partners into letterDict
+
+
+#-----------Learn about letters in rows and columns together---------
+
+# Adds row partners (two letters in same row) into letterDict
 # Mutating function (changes letterDict)
 def makeRowPartners(letterDict):
     # Motivation: If A -> B and B -> A they must be in rows (from rectangles)
@@ -44,11 +54,143 @@ def makeRowPartners(letterDict):
                 letterDict[letter1].inSameRow.add(letter2)
                 letterDict[letter2].inSameRow.add(letter1)
 
-
-   
-
+# Finds pairs that must be in rectangles or in rows / columns
+# Adds row and column partners to letterDict (mutates letterDict)
+# Returns rowsOrCols, a set of strings that appear either in rows or cols
+def findOrderedRowsCols(digraphMap, letterDict):
+    rowsOrCols = findSimpleRowsOrCols(digraphMap)
     
-       
+    for key in digraphMap:
+        value = digraphMap[key]
+        revdValue = value.reverse()
+
+        # Look for digraphs of which we know encryption and decryption
+        if value in digraphMap or revdValue in digraphMap:
+            digraph1, digraph2 = key, value
+            if value in digraphMap:
+                digraph3 = digraphMap[value]
+            else: # So revdValue in digraphMap
+                # Using fact that if BA -> DC then AB -> CD no matter what
+                revdDigraph3 = digraphMap[revdValue]
+                digraph3 = revdDigraph3.reverse()
+                
+            dealWithRectangles(digraph1, digraph2, digraph3, letterDict)
+
+            # Check for letters in same row/col (AB -> CD -> EA) then row/col 
+            # BDACE or (AB -> CD -> BE) then row/col ACBDE
+            if digraph3.let2 == digraph1.let1:
+                rowsOrCols.add(digraph1.let2 + digraph2.let2 + 
+                                digraph1.let1 + digraph2.let1 + digraph3.let1)
+            elif digraph3.let1 == digraph1.let2:
+                rowsOrCols.add(digraph1.let1 + digraph2.let1 + digraph3.let1 +
+                                digraph2.let2 + digraph3.let2)
+            
+    # Removes rows or cols with no information       
+    delUnneededRowsOrCols(rowsOrCols)
+    return rowsOrCols
+
+# Finds digraph pairs that must be consecutive in a row or column 
+# Example if AB -> BC then have row ABC
+# Helper for findUnorderedRowsCols
+def findSimpleRowsOrCols(digraphMap):
+    # Initialized as list to make looping through easier, will become set
+    rowsOrCols = []
+
+    # Look for plain-cipher pairs that must encrypt in row or col
+    for plain in digraphMap:
+        cipher = digraphMap[plain]
+        
+        # IF AB -> BC then row or col is ABC
+        if cipher.let1 == plain.let2:
+            rowsOrCols.append(plain.let1 + plain.let2 + cipher.let2)
+        # Else if BA -> CB then row or col is ABC
+        elif cipher.let2 == plain.let1:
+            rowsOrCols.append(plain.let2 + plain.let1 + cipher.let1)
+
+    # Combine all strings that are in the same row
+    # For example ABC and BCD must be in same row, so becomes ABCD
+    rowsOrCols = set(combineRowsCols(rowsOrCols))
+    
+    return rowsOrCols
+
+# Combine all sequences in the same row
+# For example ABC and BCD can combine into ABCD 
+# Helper for findSimpleRowsOrCols
+def combineRowsCols(rowsOrCols):
+   
+    # Loop through pairs in list (done with 'while' because list mutates)
+    i = 0
+    while i < len(rowsOrCols):
+        rowOrCol1 = rowsOrCols[i]
+        # Keeps tracks of whether rowOrCol1 was put into bigger string
+        combined = False
+        
+        j = i+1
+        while j < len(rowsOrCols):
+            rowOrCol2 = rowsOrCols[j]
+
+            # In form rowOrCol = CD... and rowOrCol2 = ...CD. 
+            # Puts ...CD... at end of list and removes CD...
+            if rowOrCol1[:2] == rowOrCol2[-2:]:
+                rowsOrCols.append(rowOrCol2 + rowOrCol1[2:])
+                rowsOrCols.pop(j)
+                combined = True
+                
+            # In form rowOrCol = ...CD and rowOrCol2 = CD... Makes ...CD...
+            elif rowOrCol1[-2:] == rowOrCol2[:2]:
+                rowsOrCols.append(rowOrCol1 + rowOrCol2[2:])
+                rowsOrCols.pop(j)
+                combined = True
+           
+            else:  # Only increment if nothing was popped   
+                j += 1
+        
+        if combined == True:
+            rowsOrCols.pop(i)
+        else: # Once again, only increment if not popped
+            i += 1
+            
+    return rowsOrCols
+
+# If digraphs are in rectangle, updates row and column partners
+# Helper for findUnorderedRowsCols
+def dealWithRectangles(digraph1, digraph2, digraph3, letterDict):
+    # Check for digraphs in rectanlge (AB -> CD -> AB)
+    if digraph1 == digraph3:   
+        # Then A and D are in column, and B and C are in column
+        # (Also have row A/C and B/D but this has already been added)
+        letterDict[digraph1.let1].inSameCol.add(digraph2.let2)
+        letterDict[digraph2.let2].inSameCol.add(digraph1.let1)
+        letterDict[digraph1.let2].inSameCol.add(digraph2.let1)
+        letterDict[digraph2.let1].inSameCol.add(digraph1.let2)
+
+# Removes rows/cols that are subsets of longer known row/col segments
+# Mutating method, helper for findUnorderedRowsCols
+def delUnneededRowsOrCols(rowsOrCols):
+    toRemove = set()
+    
+    for rowOrCol1 in rowsOrCols:
+        for rowOrCol2 in rowsOrCols:
+            if isSubsetOf(rowOrCol1, rowOrCol2):
+                toRemove.add(rowOrCol1)
+                
+    rowsOrCols -= toRemove
+    
+# Says whether smallRow is contained in bigRow with wrapparound allowed
+# Example isSubsetOf('DEA', 'ABCDE') returns True
+# Helper to deleteUnneededRows
+def isSubsetOf(smallRow, bigRow):
+    if len(smallRow) > len(bigRow) or smallRow == bigRow:
+        return False
+    for i in range(len(bigRow)):
+        if bigRow.find(smallRow) != -1:
+            return True
+        bigRow = bigRow[1:] + bigRow[0]
+    
+    return False
+
+
+#------------------Consolidation-------------------
 
 # Make it so that all letters in a row have all other letters listed
 # For example, input could have A.inSameRow = {B}, B.inSameRow = {C,D}
@@ -114,163 +256,11 @@ def consolidateColPartners(letterDict):
             if letter in col:
                 letterDict[letter].inSameCol = col - {letter}
     
-    
-
-
-
-
-
-
-
-
-
-
-# Finds pairs that must be in rectangles or in rows / columns
-# Adds row and column partners to letterDict (mutates letterDict)
-# Returns rowsOrCols, a set of strings that appear either in rows or cols
-def findOrderedRowsCols(digraphMap, letterDict):
-    rowsOrCols = findSimpleRowsOrCols(digraphMap)
-    
-    for key in digraphMap:
-        value = digraphMap[key]
-        revdValue = value.reverse()
-
-        # Look for digraphs of which we know encryption and decryption
-        if value in digraphMap or revdValue in digraphMap:
-            digraph1, digraph2 = key, value
-            if value in digraphMap:
-                digraph3 = digraphMap[value]
-            else: # So revdValue in digraphMap
-                # Using fact that if BA -> DC then AB -> CD no matter what
-                revdDigraph3 = digraphMap[revdValue]
-                digraph3 = revdDigraph3.reverse()
-                
-            dealWithRectangles(digraph1, digraph2, digraph3, letterDict)
-
-            # Check for letters in same row/col (AB -> CD -> EA) then row/col 
-            # BDACE or (AB -> CD -> BE) then row/col ACBDE
-            if digraph3.let2 == digraph1.let1:
-                rowsOrCols.add(digraph1.let2 + digraph2.let2 + 
-                                digraph1.let1 + digraph2.let1 + digraph3.let1)
-            elif digraph3.let1 == digraph1.let2:
-                rowsOrCols.add(digraph1.let1 + digraph2.let1 + digraph3.let1 +
-                                digraph2.let2 + digraph3.let2)
-            
-    # Removes rows or cols with no information       
-    delUnneededRowsOrCols(rowsOrCols)
-    return rowsOrCols
-
-
-# Finds digraph pairs that must be consecutive in a row or column 
-# Example if AB -> BC then have row ABC
-# Helper for findRectOrRowPairs
-def findSimpleRowsOrCols(digraphMap):
-    # Initialized as list to make looping through easier, will become set
-    rowsOrCols = []
-
-    # Look for plain-cipher pairs that must encrypt in row or col
-    for plain in digraphMap:
-        cipher = digraphMap[plain]
-        
-        # IF AB -> BC then row or col is ABC
-        if cipher.let1 == plain.let2:
-            rowsOrCols.append(plain.let1 + plain.let2 + cipher.let2)
-        # Else if BA -> CB then row or col is ABC
-        elif cipher.let2 == plain.let1:
-            rowsOrCols.append(plain.let2 + plain.let1 + cipher.let1)
-
-    # Combine all strings that are in the same row
-    # For example ABC and BCD must be in same row, so becomes ABCD
-    rowsOrCols = set(combineRowsCols(rowsOrCols))
-    
-    return rowsOrCols
-
-# If digraphs are in rectangle, updates row and column partners
-def dealWithRectangles(digraph1, digraph2, digraph3, letterDict):
-    # Check for digraphs in rectanlge (AB -> CD -> AB)
-    if digraph1 == digraph3:   
-        # Then A and D are in column, and B and C are in column
-        # (Also have row A/C and B/D but this has already been added)
-        letterDict[digraph1.let1].inSameCol.add(digraph2.let2)
-        letterDict[digraph2.let2].inSameCol.add(digraph1.let1)
-        letterDict[digraph1.let2].inSameCol.add(digraph2.let1)
-        letterDict[digraph2.let1].inSameCol.add(digraph1.let2)
-
-
-# Combine all sequences in the same row
-# For example ABC and BCD can combine into ABCD 
-# Helper for findSimpleRowsOrCols
-def combineRowsCols(rowsOrCols):
-   
-    # Loop through pairs in list (done with 'while' because list mutates)
-    i = 0
-    while i < len(rowsOrCols):
-        rowOrCol1 = rowsOrCols[i]
-        # Keeps tracks of whether rowOrCol1 was put into bigger string
-        combined = False
-        
-        j = i+1
-        while j < len(rowsOrCols):
-            rowOrCol2 = rowsOrCols[j]
-
-            # In form rowOrCol = CD... and rowOrCol2 = ...CD. 
-            # Puts ...CD... at end of list and removes CD...
-            if rowOrCol1[:2] == rowOrCol2[-2:]:
-                rowsOrCols.append(rowOrCol2 + rowOrCol1[2:])
-                rowsOrCols.pop(j)
-                combined = True
-                
-            # In form rowOrCol = ...CD and rowOrCol2 = CD... Makes ...CD...
-            elif rowOrCol1[-2:] == rowOrCol2[:2]:
-                rowsOrCols.append(rowOrCol1 + rowOrCol2[2:])
-                rowsOrCols.pop(j)
-                combined = True
-           
-            else:  # Only increment if nothing was popped   
-                j += 1
-        
-        if combined == True:
-            rowsOrCols.pop(i)
-        else: # Once again, only increment if not popped
-            i += 1
-            
-    return rowsOrCols
-
-
-
-# Removes rows/cols that are subsets of longer known row/col segments
-# Mutating method
-def delUnneededRowsOrCols(rowsOrCols):
-    toRemove = set()
-    
-    for rowOrCol1 in rowsOrCols:
-        for rowOrCol2 in rowsOrCols:
-            if isSubsetOf(rowOrCol1, rowOrCol2):
-                toRemove.add(rowOrCol1)
-                
-    rowsOrCols -= toRemove
-    
-
-
-
-# Says whether smallRow is contained in bigRow with wrapparound allowed
-# Example isSubsetOf('DEA', 'ABCDE') returns True
-# Helper to deleteUnneededRows
-def isSubsetOf(smallRow, bigRow):
-    if len(smallRow) > len(bigRow) or smallRow == bigRow:
-        return False
-    for i in range(len(bigRow)):
-        if bigRow.find(smallRow) != -1:
-            return True
-        bigRow = bigRow[1:] + bigRow[0]
-    
-    return False
-
 
 
 # Updates letterDict to say which letter each letter precedes and succeeds
 # in either a row or a column (eg if column is ABCDE then B.succeeds={A})
-# Mutating
+# Mutating, TODO delete later, not used in crackTable2
 def updatePrecSuccLetters(letterDict, rowsOrCols):
     boardDim = 5
     

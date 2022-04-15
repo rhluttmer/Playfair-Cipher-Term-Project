@@ -22,7 +22,6 @@ class Button(object):
 
 def onAppStart(app):
     app.introVisible = True
-    app.gridVisible = False
     app.encrypting = False
 
     app.encInstructsVisible = False
@@ -55,6 +54,9 @@ def initializeGridVars(app):
 
     app.keyTable = None
 
+#-------------------Buttons---------------------
+
+# Create all buttons
 def initializeButtons(app):
     app.buttons = []
     app.buttonWidth = min(3 * app.boxDim, app.width / 4.2)
@@ -65,9 +67,6 @@ def initializeButtons(app):
     initializeEncryptButtons(app)
     initializeBackAndNextButtons(app)
     
-    
-    
-
 # Make the buttons that appear on the intro screen
 def initializeIntroButtons(app):
     width, height = app.buttonWidth, app.buttonHeight
@@ -129,7 +128,11 @@ def initializeMessageVars(app):
 
 def initializeTextVars(app):
     app.font = 'monospace'
+
+    # I couldn't find it on the CS academy docs, so I used this source
+    # to find the width to height ratio https://code-examples.net/en/q/123a6fd
     app.fontWidthToHeightRatio = 0.6
+
     app.fontSize = app.height / 25
     app.headingCx = app.width / 2
     app.headingHeight = 2 * app.fontSize
@@ -166,6 +169,7 @@ def onMousePress(app, mouseX, mouseY):
     defaultMessageKeyButtonClicked(mouseX, mouseY, app)
     
     nextButtonClicked(mouseX, mouseY, app)
+    backButtonClicked(mouseX, mouseY, app)
 
 # Checks if click was in encryption button, and starts if encryption if so
 def encButtonClicked(mouseX, mouseY, app):
@@ -215,8 +219,10 @@ def nextButtonClicked(mouseX, mouseY, app):
     
     if app.processMessageInstructsVisible == True:
         app.processMessageInstructsVisible = False
-        app.makeGridInstructsVisible = True
-    
+        startMakeKeyGridExplanation(app)
+        
+
+# Brings user to the previous page  
 def backButtonClicked(mouseX, mouseY, app):
     if (not mouseInButton(mouseX, mouseY, app.backButton) or 
         not app.backButtonVisible):
@@ -225,6 +231,24 @@ def backButtonClicked(mouseX, mouseY, app):
     if app.processMessageInstructsVisible == True:
         app.processMessageInstructsVisible = False
         app.encInstructsVisible = True
+        
+        app.nextButtonVisible = False
+        app.backButtonVisible = False
+        resetEncEnteringButtons(app)
+    
+    elif app.makeGridInstructsVisible:
+        app.makeGridInstructsVisible = False
+        app.processMessageInstructsVisible = True
+        
+# Resets the buttons on the entering key/message screen
+def resetEncEnteringButtons(app):
+    # So that user doesn't have to resubmit stuff if they don't want to
+    if app.plaintext.strip() != '' and app.key.strip() != '':
+        app.submitMessageKeyButton.on = True
+    else:
+        app.submitMessageKeyButton.on = False
+    app.enterMessageButton.on = True
+    app.enterKeyButton.on = True
 
 #---------------------onMouseMove and helpers------
 
@@ -255,14 +279,18 @@ def onKeyPress(app, key):
         app.plaintext = 'How are you doing?'
         app.key = 'computer'
         app.introVisible = False
-        app.gridVisible = True
-        app.encInstructionsVisible = False
-        startEncryption(app)
+        app.encInstructssVisible = False
+        app.processMessageInstructsVisible = False
+        
+        startMakeKeyGridExplanation(app)
+        
+        
     
     if key == 'p':
         app.plaintext = app.defaultPlaintext + 'more letters here for length'
         app.key = app.defaultKey
         app.introVisible = False
+        app.makeGridInstructsVisible = False
         startEncryption(app)
 
 
@@ -285,6 +313,22 @@ def startEncryption(app):
     pass
 
 
+def startMakeKeyGridExplanation(app):
+    app.nextButtonVisible = True
+    app.backButtonVisible = True
+   
+    # Data needed for making grid
+    key = app.key
+    strippedKey = encryptDecrypt.removeNonAlphas(key.upper())
+    keyWithoutJ = strippedKey.replace('J', 'I')
+    wholeToPlace = keyWithoutJ + string.ascii_uppercase.replace('I', 'J')
+    wholeToPlace = encryptDecrypt.removeStringDuplicates(wholeToPlace)
+    restToPlace = wholeToPlace[len(keyWithoutJ):]
+    app.keyTable = encryptDecrypt.makeKeyTable(key)
+
+    app.makeGridInstructsVisible = True
+
+
 
 ########################################################
 #                      View
@@ -295,14 +339,15 @@ def redrawAll(app):
     if app.introVisible:
         drawIntroScreen(app)
     
-    if app.gridVisible == True:
-        drawGrid(app)
+    if app.makeGridInstructsVisible == True:
+        drawGridExplanation(app)
     
     if app.encInstructsVisible == True:
         drawEncryptionInstructions(app)
     
     if app.processMessageInstructsVisible:
         processMessageExplanation(app)
+ 
     
     drawButtons(app)
 
@@ -363,19 +408,28 @@ def drawEncryptionInstructions(app):
     text = 'Or if you prefer, click below to use the default message and key.'
     drawTextbox(app, text, topY)
 
+
+
+
 # Explains how plaintext is prepared for encryption
 def processMessageExplanation(app):
     drawHeading(app, 'Processing Message')
 
     # Line shows entered message in black and then message in purple
+    topY = app.margin + app.headingHeight + 0.5 * app.fontSize
     text = 'Entered Message: '
+    message = app.plaintext if (app.encrypting) else app.ciphertext
+    drawEnteredPlusInput(app, topY, text, message)
+    '''
     topY = app.margin + app.headingHeight + 0.5 * app.fontSize
     drawTextbox(app, text, topY)
     widthOfText = len(text) * app.fontSize * app.fontWidthToHeightRatio
-    message = app.plaintext if (app.encrypting) else app.ciphertext
+    
     width = app.width - widthOfText
     drawWithElipses(app, message, topY, left = widthOfText + app.margin, 
                     width = width, color = app.inputColor)
+    '''
+    
     topY += app.lineSpace * app.fontSize + app.parSpace
 
     # Explain why and then print upper case, only letters, message
@@ -456,10 +510,10 @@ def turnDigraphListToString(app):
 
 
 # Very incomplete
-def fillGridExplanation(app):
-    app.gridVisible = True
+def drawGridExplanation(app):
+    drawHeading(app, 'Making Key Grid')
 
-
+'''
     # Data needed for making grid
     key = app.key
     strippedKey = encryptDecrypt.removeNonAlphas(key.upper())
@@ -468,14 +522,14 @@ def fillGridExplanation(app):
     wholeToPlace = encryptDecrypt.removeStringDuplicates(wholeToPlace)
     restToPlace = wholeToPlace[len(keyWithoutJ):]
     app.keyTable = encryptDecrypt.makeKeyTable(key)
-    
+'''
    
 
 # Wraps text in a label around, returns how many lines long it was
 def drawTextbox(app, text, top, left = None, width = None, fontSize = None, 
                 color = 'black'):
     if (left == None): left = app.margin
-    if (width == None): width = app.width
+    if (width == None): width = app.width - app.margin
     if (fontSize == None): fontSize = app.fontSize
     widthToHeightRatio = app.fontWidthToHeightRatio
     fontWidth = fontSize * widthToHeightRatio
@@ -506,7 +560,7 @@ def drawWithElipses(app, text, top, left = None, width = None, fontSize = None,
                     color = 'black'):
     # This is to get around not being able to have app.margin as default value
     if (left == None): left = app.margin
-    if (width == None): width = app.width
+    if (width == None): width = app.width - 2 * app.margin
     if (fontSize == None): fontSize = app.fontSize
 
     # How wide in pixels one character of font is
@@ -521,6 +575,16 @@ def drawWithElipses(app, text, top, left = None, width = None, fontSize = None,
 
     drawLabel(text, left, top, align='left-top', size=fontSize, 
                   font=app.font, fill = color)
+
+# Draws blackText first in black, and then the user's input text on the 
+# same line but in a different color
+def drawEnteredPlusInput(app, topY, blackText, inputText):
+    drawTextbox(app, blackText, topY)
+    widthOfText = len(blackText) * app.fontSize * app.fontWidthToHeightRatio
+    width = app.width - 2 * app.margin - widthOfText # Width for input text
+    drawWithElipses(app, inputText, topY, left = widthOfText + app.margin, 
+                    width = width, color = app.inputColor)
+    
 
 
 # Draws the 5 x 5 encryption grid (without letters)
