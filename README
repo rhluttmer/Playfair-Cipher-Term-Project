@@ -5,21 +5,18 @@ you just need to call the function in main in that file
 
 classes.py : handles all classes for OOP
 
-findKeyPseudo : brainstorming of ideas for how to find the key table based on
-an input of plaintext and ciphertext
-
-badCrackTable.py : a REALLY brute force attempt at finding the key table. Uses backtracking,
-places letters and then only check is that there are no diagraphs contained within
-the table that encrypt to the wrong thing
-
-crackTable1.py : an attempt at improving the backtracking. Starts by gathering
-a fair amount of information about the letters, what should be in rows/cols etc.
-But in the implementation, not all of that information is used effectively
-which makes the program still go way too slow.
-
 letterDictHelpers.py : at the beginning of crackTable1, a letter dict is made
 to store a bunch of info about the letters, what they are in rows/cols with,
 their neighbors, etc. These are helper functions for that
 
-crackTable2.py : an attempt to improve the shortcomings of crackTable1
+crackTable2.py : user enters plaintext and ciphertext, returns a keygrid that works
+
+crackTableCorrectness.txt: A log of inputs and outputs used to test the program
+
+encDecGraphics.py: This will eventually be the main program with which the
+user interacts, it is at a very beginning stage for now
+
+design proposal / storyboard: the required tp design proposal and storyboard
+
+
 
