@@ -1,4 +1,4 @@
-
+# TODO: Make buttons on instruction pages work
 
 from cmu_cs3_graphics import *
 import encryptDecrypt
@@ -54,8 +54,10 @@ def turnOffAllStates(app):
     app.digraphEncInstructsVisible = False
     app.encSummaryVisible = False
 
+    app.decInstructsVisible = False
     app.decryptionPrepVisible = False
 
+    app.crackInstructsVisible = False
     app.crackingSetupVisible = False
 
     app.nextButtonVisible = False
@@ -91,6 +93,8 @@ def initializeButtons(app):
     
     initializeIntroButtons(app)
     initializeEncryptButtons(app)
+    initializeDecryptButtons(app)
+    initializeCrackButtons(app)
     initializeBackAndNextButtons(app)
     initializeEncSummaryButtons(app)
     
@@ -103,6 +107,16 @@ def initializeIntroButtons(app):
                            'Encrypt', 'intro')
     app.buttons.append(app.encButton)
 
+    # Decrypt button on intro screen
+    app.decButton = Button(app.width / 2, app.height * 3/4, width, height, 
+                           'Decrypt', 'intro')
+    app.buttons.append(app.decButton)
+
+    # Encrypt button on intro screen
+    app.crackButton = Button(app.width * 3/4, app.height * 3/4, width, height, 
+                           'Crack', 'intro')
+    app.buttons.append(app.crackButton)
+
 # Make the buttons that appear on the first encryption screen
 def initializeEncryptButtons(app):
     width, height = app.buttonWidth, app.buttonHeight
@@ -113,16 +127,64 @@ def initializeEncryptButtons(app):
                                     height, 'Enter message', 'encInstructions')
     app.enterKeyButton = Button(app.width / 2, cy, width, 
                                 height, 'Enter keyword', 'encInstructions')
-    app.submitMessageKeyButton = Button(app.width * 3/4, cy, width, 
+    app.startEncButton = Button(app.width * 3/4, cy, width, 
                                         height, 'Start encryption', 
                                         'encInstructions')
     cy = app.height * 2/3
-    app.defaultMessageKeyButton = Button(app.width * 0.5, cy, width, 
+    app.useDefaultsEncButton = Button(app.width * 0.5, cy, width, 
                                          height, 'Use defaults', 
                                          'encInstructions')
-    app.submitMessageKeyButton.on = False
+    app.startEncButton.on = False
     app.buttons.extend([app.enterMessageButton, app.enterKeyButton,
-                       app.submitMessageKeyButton, app.defaultMessageKeyButton])
+                       app.startEncButton, app.useDefaultsEncButton])
+
+
+# Make the buttons that appear on the first decryption screen
+def initializeDecryptButtons(app):
+    width, height = app.buttonWidth, app.buttonHeight
+    
+    cy = app.height * 1/3
+    # Enter message button for use in encryption
+    app.enterMessageDecButton = Button(app.width / 4, cy, width, 
+                                       height, 'Enter encrypted message', 
+                                       'decInstructions')
+    app.enterKeyDecButton = Button(app.width / 2, cy, width, 
+                                height, 'Enter keyword', 'decInstructions')
+    app.startDecButton = Button(app.width * 3/4, cy, width, 
+                                           height, 'Start decryption', 
+                                           'decInstructions')
+    cy = app.height * 2/3
+    app.useDefaultsDecButton = Button(app.width * 0.5, cy, width, 
+                                      height, 'Use defaults', 
+                                      'decInstructions')
+    app.startDecButton.on = False
+    app.buttons.extend([app.enterMessageDecButton, app.enterKeyDecButton,
+                       app.startDecButton, app.useDefaultsDecButton])
+
+# Make the buttons that appear on the first decryption screen
+def initializeCrackButtons(app):
+    width, height = app.buttonWidth, app.buttonHeight
+    
+    cy = app.height * 1/3
+    # Enter message button for use in encryption
+    app.enterMessageCrackButton = Button(app.width / 4, cy, width, 
+                                         height, 'Enter original message', 
+                                         'crackInstructions')
+    app.enterEncMessageCrackButton = Button(app.width / 2, cy, width, 
+                                            height, 'Enter encrypted message', 
+                                            'crackInstructions')
+    app.startCrackButton = Button(app.width * 3/4, cy, width, height, 
+                                  'Start cracking', 'crackInstructions')
+    cy = app.height * 2/3
+    app.useDefaultsCrackButton = Button(app.width * 0.5, cy, width, 
+                                        height, 'Use defaults', 
+                                        'crackInstructions')
+    app.startCrackButton.on = False
+    app.buttons.extend([app.enterMessageCrackButton, app.enterEncMessageCrackButton,
+                       app.startCrackButton, app.useDefaultsCrackButton])
+
+
+
 
 def initializeBackAndNextButtons(app):
     # Make these buttons smaller than the defaults
@@ -217,24 +279,44 @@ def initializeTextVars(app):
 #-------------------onMousePress and helpers-----------------
 
 def onMousePress(app, mouseX, mouseY):
-    encButtonClicked(mouseX, mouseY, app)
     
-    # Encryption screen buttons
-    enterMessageButtonClicked(mouseX, mouseY, app)
-    enterKeyButtonClicked(mouseX, mouseY, app)
-    submitMessageKeyButtonClicked(mouseX, mouseY, app)
-    defaultMessageKeyButtonClicked(mouseX, mouseY, app)
+    # Have an or statment so that through short circuit evaluation, 
+    # only one will be returned
+    return (introButtonsClicked(mouseX, mouseY, app) or
     
-    nextButtonClicked(mouseX, mouseY, app)
-    backButtonClicked(mouseX, mouseY, app)
+            # Encryption screen buttons
+            enterMessageButtonClicked(mouseX, mouseY, app) or
+            enterKeyButtonClicked(mouseX, mouseY, app) or 
+            startEncButtonClicked(mouseX, mouseY, app) or
+            useDefaultsEncButtonClicked(mouseX, mouseY, app) or
+            
+            nextButtonClicked(mouseX, mouseY, app) or 
+            backButtonClicked(mouseX, mouseY, app) or 
 
-    encSummaryButtonsClicked(mouseX, mouseY, app)
+            encSummaryButtonsClicked(mouseX, mouseY, app) )
 
-# Checks if click was in encryption button, and starts if encryption if so
-def encButtonClicked(mouseX, mouseY, app):
+# Checks if click was in any button on intro screen, starts necessary actions
+def introButtonsClicked(mouseX, mouseY, app):
     if mouseInButton(mouseX, mouseY, app.encButton):
         app.introVisible = False
         app.encInstructsVisible = True
+        return True
+        
+
+    elif mouseInButton(mouseX, mouseY, app.decButton):
+        app.introVisible = False
+        app.decInstructsVisible = True
+        return True
+        
+    
+    elif mouseInButton(mouseX, mouseY, app.crackButton):
+        app.introVisible = False
+        app.crackInstructsVisible = True
+        return True
+
+    return False
+    
+    
 
 # Checks if click was in the enterMessage button, and if so opens window for
 # user input.
@@ -244,7 +326,10 @@ def enterMessageButtonClicked(mouseX, mouseY, app):
         app.plaintext = app.getTextInput('Please enter your message.')
         if (app.plaintext != ''): app.enterMessageButton.on = False
         if app.key != '' and app.plaintext != '':
-            app.submitMessageKeyButton.on = True
+            app.startEncButton.on = True
+        
+        return True
+    return False
 
 # Checks if click was in the enterKey button, and if so opens window for
 # user input.
@@ -254,36 +339,51 @@ def enterKeyButtonClicked(mouseX, mouseY, app):
         app.key = app.getTextInput('Please enter the keyword.')
         if (app.key != ''): app.enterKeyButton.on = False
         if app.key != '' and app.plaintext != '':
-            app.submitMessageKeyButton.on = True
+            app.startEncButton.on = True
+        return True
+
+    return False
     
 # Moves on to explaining message processing if message and key are submitted
-def submitMessageKeyButtonClicked(mouseX, mouseY, app):  
-    if (mouseInButton(mouseX, mouseY, app.submitMessageKeyButton) and
+def startEncButtonClicked(mouseX, mouseY, app):  
+    if (mouseInButton(mouseX, mouseY, app.startEncButton) and
           app.encInstructsVisible):
           startProcessMessage(app)
 
+          return True
+
+    return False
+
 # Moves on to explaining message processing if user opts to use default
-def defaultMessageKeyButtonClicked(mouseX, mouseY, app):  
-    if (mouseInButton(mouseX, mouseY, app.defaultMessageKeyButton) and
+def useDefaultsEncButtonClicked(mouseX, mouseY, app):  
+    if (mouseInButton(mouseX, mouseY, app.useDefaultsEncButton) and
           app.encInstructsVisible):
           app.plaintext = app.defaultPlaintext
           app.key = app.defaultKey
           startProcessMessage(app)
 
+          return True
+    return False
+
 def encSummaryButtonsClicked(mouseX, mouseY, app):
     if not app.encSummaryVisible:
-        return
+        return False
 
     if mouseInButton(mouseX, mouseY, app.encSummaryDecButton):
         startDecryptionPrep(app)
+        return True
         
-    elif mouseInButton(mouseX, mouseY, app.encSummaryCrackButton):
+    if mouseInButton(mouseX, mouseY, app.encSummaryCrackButton):
         startCrackingSetup(app)
+        return True
     
-    # TODO: Fix bug
-    elif mouseInButton(mouseX, mouseY, app.mainMenuButton):
-        #turnOffAllStates(app)
+    
+    if mouseInButton(mouseX, mouseY, app.mainMenuButton):
+        turnOffAllStates(app)
         app.introVisible = True
+        return True
+
+    return False
         
 
 
@@ -291,7 +391,7 @@ def encSummaryButtonsClicked(mouseX, mouseY, app):
 def nextButtonClicked(mouseX, mouseY, app):
     if (not mouseInButton(mouseX, mouseY, app.nextButton) or 
         not app.nextButtonVisible):
-        return
+        return False
     
     if app.processMessageInstructsVisible:
         startMakeKeyGridExplanation(app)
@@ -301,13 +401,15 @@ def nextButtonClicked(mouseX, mouseY, app):
 
     elif app.digraphEncInstructsVisible:
         startEncryptionSummary(app)
+    
+    return True
 
         
 # Brings user to the previous page  
 def backButtonClicked(mouseX, mouseY, app):
     if (not mouseInButton(mouseX, mouseY, app.backButton) or 
         not app.backButtonVisible):
-        return
+        return False
     
     if app.processMessageInstructsVisible == True:
         turnOffAllStates(app)
@@ -322,14 +424,16 @@ def backButtonClicked(mouseX, mouseY, app):
 
     elif app.encSummaryVisible:
         startEncryptingDigraphs(app)
+    
+    return True
         
 # Resets the buttons on the entering key/message screen
 def resetEncEnteringButtons(app):
     # So that user doesn't have to resubmit stuff if they don't want to
     if app.plaintext.strip() != '' and app.key.strip() != '':
-        app.submitMessageKeyButton.on = True
+        app.startEncButton.on = True
     else:
-        app.submitMessageKeyButton.on = False
+        app.startEncButton.on = False
     app.enterMessageButton.on = True
     app.enterKeyButton.on = True
 
@@ -360,6 +464,7 @@ def mouseInButton(mouseX, mouseY, button):
 #------------------onKeyPress -------------------
 
 def onKeyPress(app, key):
+    # Bring to grid screen
     if key == 'g':
         app.plaintext = 'How are you doing?'
         app.key = 'computer'
@@ -368,14 +473,16 @@ def onKeyPress(app, key):
         
         startMakeKeyGridExplanation(app)
         
-        
-    
+    # Bring to process message screen
     if key == 'p':
         app.plaintext = app.defaultPlaintext + 'more letters here for length'
         app.key = app.defaultKey
-        app.introVisible = False
-        app.makeGridInstructsVisible = False
+        
         startProcessMessage(app)
+
+    if key == 'm':
+        turnOffAllStates(app)
+        app.introVisible = True
 
 
 
@@ -479,14 +586,14 @@ def redrawAll(app):
     if app.introVisible:
         drawIntroScreen(app)
     
-    elif app.makeGridInstructsVisible:
-        drawGridExplanation(app)
-    
     elif app.encInstructsVisible:
         drawEncryptionInstructions(app)
     
     elif app.processMessageInstructsVisible:
         processMessageExplanation(app)
+    
+    elif app.makeGridInstructsVisible:
+        drawGridExplanation(app)
 
     elif app.digraphEncInstructsVisible:
         drawEncryptDigraphInstructions(app)
@@ -494,11 +601,18 @@ def redrawAll(app):
     elif app.encSummaryVisible:
         drawEncSummary(app)
 
+    elif app.decInstructsVisible:
+        drawDecryptionInstructions(app)
+
     elif app.decryptionPrepVisible:
         drawDecryptionPrep(app)
+
+    elif app.crackInstructsVisible:
+        drawCrackInstructions(app)
     
     elif app.crackingSetupVisible:
         drawCrackingSetup(app)
+
  
     
     drawButtons(app)
@@ -509,9 +623,10 @@ def drawIntroScreen(app):
     text = 'Playfair Cipher!'
     drawHeading(app, text)
     
-    topY = app.height / 2
-    text = 'Click on one of the buttons below to get started'
-    drawTextbox(app, text, topY)
+    centerX, topY = app.width / 2, app.height / 2
+    text = 'Click on one of the buttons below to get started:'
+    drawLabel(text, centerX, topY, size = app.fontSize, font = app.font)
+    
 
 # Draws the button
 def drawButtons(app):
@@ -520,7 +635,9 @@ def drawButtons(app):
             (button.use == 'encInstructions' and app.encInstructsVisible) or
             (button.use == 'next' and app.nextButtonVisible) or
             (button.use == 'back' and app.backButtonVisible) or
-            (button.use == 'encSummary' and app.encSummaryVisible)): 
+            (button.use == 'encSummary' and app.encSummaryVisible) or
+            (button.use == 'decInstructions' and app.decInstructsVisible) or
+            (button.use == 'crackInstructions' and app.crackInstructsVisible)): 
             if button.hovering or not button.on:
                 fill = None
                 textCol = 'black'
@@ -538,28 +655,21 @@ def drawButtons(app):
 
             # Take the min
             labelSize = min(widthSize, heightSize)
+            bold = True if (labelSize <= 12) else False
             
-            drawLabel(button.label, button.cx, button.cy, 
-                      size = labelSize, fill = textCol, font = app.font)
+            drawLabel(button.label, button.cx, button.cy, size = labelSize, 
+                      fill = textCol, font = app.font, bold = bold)
+
+
+#---------------Encryption Screens-----------------------
 
 # Draws the instructions for encryption
 def drawEncryptionInstructions(app):
-    # Intro message
-    text = 'Encryption'
-    cx = app.width / 2
-    textHeight = 2 * app.fontSize
-    cy = app.margin + 0.5*textHeight
-    #drawLabel(text, app.headingCx, app.headingCy, size = textHeight, font = app.font)
-    drawHeading(app, text)
-
-    leftX = app.margin
-    topY = app.height * 1/3 -  app.buttonHeight - 0.5 * app.fontSize
-    text = 'Please enter your message and keywords and then click start.'
-    drawTextbox(app, text, topY)
-
-    topY = app.height * 2/3 -  app.buttonHeight - 0.5* app.fontSize
-    text = 'Or if you prefer, click below to use the default message and key.'
-    drawTextbox(app, text, topY)
+    heading = 'Encryption'
+    text1 = 'Please enter your message and keywords and then click start.'
+    text2 = 'Or if you prefer, click below to use the default message and key.'
+    
+    drawInstructionsPage(app, heading, text1, text2)
 
 # Explains how plaintext is prepared for encryption
 def processMessageExplanation(app):
@@ -778,11 +888,48 @@ def drawEncSummary(app):
             "Crack functions.")
     topY = drawTextbox(app, text, topY)
 
+
+#---------------Decryption screens---------------
+# Draws the instructions for encryption
+def drawDecryptionInstructions(app):
+    # Intro message
+    heading = 'Decryption'
+    text1 = 'Please enter the encrypted message and keyword and then click start.'
+    text2 = 'Or if you prefer, click below to use the default message and key.'
+    drawInstructionsPage(app, heading, text1, text2)
+
+
+
+
 def drawDecryptionPrep(app):
     topY = drawHeading(app, 'Preparing Message and Key')
 
+
+def drawCrackInstructions(app):
+    heading = 'Cracking the Cipher'
+    text1 = 'Please enter the message and its encryption and then click start.'
+    text2 = 'Or if you prefer, click below to use the default message and encryption.'
+    
+    drawInstructionsPage(app, heading, text1, text2)
+
 def drawCrackingSetup(app):
     topY = drawHeading(app, 'Cracking Set Up')
+
+
+
+
+# Puts text in the right spot for the encryption, decryption, and cracking
+# instruction pages
+def drawInstructionsPage(app, heading, text1, text2):
+    drawHeading(app, heading)
+
+    topY = app.height * 1/3 -  app.buttonHeight - 2 * app.fontSize
+    drawTextbox(app, text1, topY)
+
+    topY = app.height * 2/3 -  app.buttonHeight - 2 * app.fontSize
+    drawTextbox(app, text2, topY)
+
+
 
 
 #------------------Helpers to help with drawing text----------------
