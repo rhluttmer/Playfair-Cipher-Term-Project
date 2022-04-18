@@ -562,8 +562,8 @@ def indexOf1stLetterAlphabetically(row):
 
 def main():
 
-    plaintext = 'Remsey is greay. Mackey has a program at level 12. Some more words.'
-    ciphertext = encryptDecrypt.encDecPlayfair(plaintext, 'batman')
+    plaintext = 'This is a test message for demonstration. Here is a word with if i just keep typing and add random stuff will this work '
+    ciphertext = encryptDecrypt.encDecPlayfair(plaintext, 'sierra')
     #print(ciphertext)
     
     result = crackKeyTable(plaintext, ciphertext)

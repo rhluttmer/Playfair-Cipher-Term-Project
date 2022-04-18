@@ -1,9 +1,9 @@
-# Next order of business: add button to explanation page
-# The next button isn't showing up right now
+
 
 from cmu_cs3_graphics import *
 import encryptDecrypt
 import string
+import classes
 
 class Button(object):
     def __init__(self, cx, cy, width, height, label, use):
@@ -20,6 +20,8 @@ class KeyLetter(object):
     def __init__(self, name, color):
         self.name = name
         self.color = color
+        self.fill = None
+        self.border = 'black'
     
     def __repr__(self):
         return f'{self.name}:{self.color}'
@@ -29,17 +31,9 @@ class KeyLetter(object):
 ########################################################
 
 def onAppStart(app):
-    app.introVisible = True
-    app.encrypting = False
 
-    app.encInstructsVisible = False
-    app.processMessageInstructsVisible = False
-    app.makeGridInstructsVisible = False
-    app.digraphEncInstructsVisible = False
-    app.encSummaryVisible = False
-    app.nextButtonVisible = False
-    app.backButtonVisible = False
-    
+    turnOffAllStates(app)
+    app.introVisible = True
     
 
     app.background = 'mintCream'
@@ -48,7 +42,6 @@ def onAppStart(app):
     initializeButtons(app)
     initializeMessageVars(app)
     initializeTextVars(app)
-
 
 
 
@@ -63,6 +56,25 @@ def initializeGridVars(app):
     app.keyTable = None
 
 #-------------------Buttons---------------------
+# Makes every isVisible state false
+def turnOffAllStates(app):
+    app.introVisible = False
+    app.encrypting = False
+    app.encInstructsVisible = False
+    app.processMessageInstructsVisible = False
+    app.makeGridInstructsVisible = False
+    app.digraphEncInstructsVisible = False
+    app.encSummaryVisible = False
+    app.nextButtonVisible = False
+    app.backButtonVisible = False
+
+# Makes every isVisible state false but then turns the next and back buttons on
+def turnOffAllStatesButBackNextButtons(app):
+    turnOffAllStates(app)
+    app.nextButtonVisible = True
+    app.backButtonVisible = True
+
+
 
 # Create all buttons
 def initializeButtons(app):
@@ -147,6 +159,13 @@ def initializeTextVars(app):
     app.headingCy = app.margin + 0.5 * app.headingHeight
     app.inputColor = 'purple'
     app.color2 = 'green'
+    app.rowColor = 'blue'
+    app.rowFillColor = 'lightSkyBlue'
+    app.colColor = 'red'
+    app.colFillColor = 'salmon'
+    app.rectColor = 'green'
+    app.rectFillColor = 'lightGreen'
+    app.resultFillColor = 'lemonChiffon'
     app.lineSpace = 1.15
     app.parSpace = 0.5 * app.fontSize
     
@@ -201,7 +220,7 @@ def enterKeyButtonClicked(mouseX, mouseY, app):
 def submitMessageKeyButtonClicked(mouseX, mouseY, app):  
     if (mouseInButton(mouseX, mouseY, app.submitMessageKeyButton) and
           app.encInstructsVisible):
-          startEncryption(app)
+          startProcessMessage(app)
 
 # Moves on to explaining message processing if user opts to use default
 def defaultMessageKeyButtonClicked(mouseX, mouseY, app):  
@@ -209,7 +228,7 @@ def defaultMessageKeyButtonClicked(mouseX, mouseY, app):
           app.encInstructsVisible):
           app.plaintext = app.defaultPlaintext
           app.key = app.defaultKey
-          startEncryption(app)
+          startProcessMessage(app)
 
 # Brings user to the next page when they click the next button
 def nextButtonClicked(mouseX, mouseY, app):
@@ -233,20 +252,14 @@ def backButtonClicked(mouseX, mouseY, app):
         return
     
     if app.processMessageInstructsVisible == True:
-        app.processMessageInstructsVisible = False
+        turnOffAllStates(app)
         app.encInstructsVisible = True
-        
-        app.nextButtonVisible = False
-        app.backButtonVisible = False
         resetEncEnteringButtons(app)
     
     elif app.makeGridInstructsVisible:
-        app.makeGridInstructsVisible = False
-        app.processMessageInstructsVisible = True
+        startProcessMessage(app)
     
     elif app.digraphEncInstructsVisible:
-        app.digraphEncInstructsVisible = False
-        app.makeGridInstructsVisible = True
         startMakeKeyGridExplanation(app)
         
 # Resets the buttons on the entering key/message screen
@@ -287,9 +300,8 @@ def onKeyPress(app, key):
     if key == 'g':
         app.plaintext = 'How are you doing?'
         app.key = 'computer'
-        app.introVisible = False
-        app.encInstructssVisible = False
-        app.processMessageInstructsVisible = False
+
+        
         
         startMakeKeyGridExplanation(app)
         
@@ -300,40 +312,24 @@ def onKeyPress(app, key):
         app.key = app.defaultKey
         app.introVisible = False
         app.makeGridInstructsVisible = False
-        startEncryption(app)
+        startProcessMessage(app)
 
 
 
 # Sets things to stuff TODO fix this explanation
-def startEncryption(app):
+def startProcessMessage(app):
+    turnOffAllStatesButBackNextButtons(app)
     app.encrypting = True
-    app.encInstructsVisible = False
     app.processMessageInstructsVisible = True
-    app.nextButtonVisible = True
-    app.backButtonVisible = True
+    
+    app.messageByDigraph = turnDigraphListToString(app)
 
-
-    
-    
-    # fillGridExplanation(app)
-    
-
-    
-    pass
 
 
 def startMakeKeyGridExplanation(app):
-    app.nextButtonVisible = True
-    app.backButtonVisible = True
+    turnOffAllStatesButBackNextButtons(app)
    
-    # Data needed for making grid
-    key = app.key
-    strippedKey = encryptDecrypt.removeNonAlphas(key.upper())
-    keyWithoutJ = strippedKey.replace('J', 'I')
-    wholeToPlace = keyWithoutJ + string.ascii_uppercase.replace('I', 'J')
-    wholeToPlace = encryptDecrypt.removeStringDuplicates(wholeToPlace)
-    restToPlace = wholeToPlace[len(keyWithoutJ):]
-    makeAppKeyTable(app, key)
+    makeAppKeyTable(app, app.key)
 
     app.makeGridInstructsVisible = True
 
@@ -345,7 +341,7 @@ def makeAppKeyTable(app, key):
     for rowList in oldKeyTable:
         newRowList = []
         for letter in rowList:
-            if letter in app.key.upper():
+            if letter in app.key.upper().replace('J', 'I'):
                 color = app.inputColor
             else:
                 color = app.color2
@@ -355,11 +351,24 @@ def makeAppKeyTable(app, key):
         newTable.append(newRowList)
     
     app.keyTable = newTable
+    app.oldKeyTable = oldKeyTable
 
 
 def startEncryptingDigraphs(app):
+    turnOffAllStatesButBackNextButtons(app)
     resetKeyTable(app)
+
+    app.messageByDigraph = turnDigraphListToString(app)
+
+    if app.keyTable == None:
+        makeAppKeyTable(app, app.key)
+
     app.digraphEncInstructsVisible = True
+
+    app.ciphertext = encryptDecrypt.encDecPlayfair(app.plaintext, app.key, 
+                                                    mode = 'encrypt')
+    app.ciphertextByDigraph = putSpacesInAndKillJs(app.ciphertext)
+    
 
 
 # Makes all letters black again
@@ -487,8 +496,7 @@ def processMessageExplanation(app):
     else:
         portion =  " we didn't "   
     text += f'In your case, {portion} have to pad. So we get: '
-    messageByDigraph = turnDigraphListToString(app)
-    topY = drawExplanationPlusOneLine(app, text, messageByDigraph, topY)
+    topY = drawExplanationPlusOneLine(app, text, app.messageByDigraph, topY)
 
 # Makes screen that explains how keyword becomes a grid
 def drawGridExplanation(app):
@@ -499,31 +507,28 @@ def drawGridExplanation(app):
             " J's must be replaced with I's. When we do this, " +
             "we get the keyword: ")
     upperKey = encryptDecrypt.removeNonAlphas(app.key.upper().replace('J', 'I'))
-    endX, endY = drawTextbox(app, text, topY, returnLines = False)
+    endX, endY = drawTextbox(app, text, topY, returnNewLineTop = False)
     topY = drawWithElipses(app, upperKey, endY, left=endX, color=app.inputColor)
 
-    drawGrid(app, gridTop = topY)
-    gridBottom = topY + app.boxDim * app.rowsCols + app.margin
-
-    leftX = app.defaultGridLeft + app.rowsCols * app.boxDim + app.margin
+    gridRight, gridBottom = drawGrid(app, gridTop = topY)
 
     duplicateLetterString = makeDuplicateLetterString(upperKey)
     text = ("We now put the keyword in the grid, making sure every letter " + 
             "appears only once. If a letter would appear more than once, " +
             "we delete all but the first instance. In this case, " +
             f"we deleted {duplicateLetterString}.")
-    lines = drawTextbox(app, text, topY, left = leftX)
-    topY += lines * app.lineSpace * app.fontSize + app.parSpace 
-
+    topY = drawTextbox(app, text, topY, left = gridRight)
+    
     text = ("Finally, we put the rest of the alphabet into the grid " +
             "alphabetically, filling each row from left to right and then " + 
             "the rows from top to bottom.")
-    drawTextbox(app, text, topY, left = leftX)
+    drawTextbox(app, text, topY, left = gridRight)
 
     text = "Now that we have our keygrid and our message, we can encrypt."
     drawTextbox(app, text, gridBottom)
 
 # Draws the 5 x 5 encryption grid (without letters)
+# Returns right and bottom sides of grid, with margin
 def drawGrid(app, gridLeft = None, gridTop = None):
     if (gridLeft == None): gridLeft = app.defaultGridLeft
     if (gridTop == None): gridTop = app.defaultGridTop
@@ -532,18 +537,113 @@ def drawGrid(app, gridLeft = None, gridTop = None):
     for row in range(app.rowsCols):
         for col in range(app.rowsCols):
             cellLeft, cellTop = getCellBounds(app, row, col, gridLeft, gridTop)
-            fill = None
-            drawRect(cellLeft, cellTop, app.boxDim, app.boxDim, fill=fill, 
-                     borderWidth=1, border='black')
             
+            if app.keyTable != None:
+                fill = app.keyTable[row][col].fill
+                border = app.keyTable[row][col].border
+            else:
+                fill = None
+                border = 'black'
+            
+            borderWidth = 1 if (border == 'black') else 3
+            
+
+            drawRect(cellLeft, cellTop, app.boxDim, app.boxDim, fill=fill, 
+                     borderWidth = borderWidth, border = border)
+            
+            # Put letters in grid if we know the letters
             if app.keyTable != None:
                 letter = app.keyTable[row][col]
                 cx, cy = cellLeft + app.boxDim / 2, cellTop + app.boxDim / 2
                 drawLabel(letter.name, cx, cy, size = app.boxDim, 
                           font = app.font, fill = letter.color)
+    
+    return findGridRightAndBottom(app, gridLeft, gridTop)
 
+# Finds the right and bottom sides of grid, with app.margin added
+# This is where new text can start
+def findGridRightAndBottom(app, gridLeft, gridTop):
+    gridBottom = gridTop + app.gridDim + app.margin
+    gridRight = gridLeft + app.gridDim + app.margin
+
+    return gridRight, gridBottom
+
+# Makes screen that explains three rules for encryption
 def drawEncryptDigraphInstructions(app):
+    # Draw heading, user input, and grid
     topY = drawHeading(app, 'Encrypting Digraphs')
+    topY = drawEnteredPlusInput(app, topY, 'Message: ', app.messageByDigraph)
+    gridRight, gridBottom = drawGrid(app, gridTop = topY)
+
+    # Explain encryption rules
+    text = "We encrypt two letters at a time with the following rules:"
+    topY = drawTextbox(app, text, topY, gridRight)
+
+    # TODO: Add arrows onto digraph
+
+    # In rows
+    text = ("1. Letters in the same row encrypt to the letters to their " +
+            "right (and there's wrap around). For example, ")
+    p1, p2, c1, c2 = colorChosenDigraph(app, 1, 1, 1, 4, 1, 2, 1, 0, 
+                                        app.rowFillColor, app.rowColor)
+    coloredText = f"{p1}{p2} becomes {c1}{c2}."
+    topY =drawEnteredPlusInputNoElipses(app, topY, text, coloredText, 
+                                  left = gridRight, inputColor = app.rowColor)
+    # In same col
+    text = ("2. Letters in the same column encrypt to the letters directly " +
+            "below them. For example, ")
+    p1, p2, c1, c2 = colorChosenDigraph(app, 1, 3, 0, 3, 2, 3, 1, 3, 
+                                        app.colFillColor, app.colColor)
+    coloredText = f"{p1}{p2} becomes {c1}{c2}."
+    topY = drawEnteredPlusInputNoElipses(app, topY, text, coloredText, 
+                                  left = gridRight, inputColor = app.colColor)
+
+    # In rectangle
+    text = ("3. Otherwise, each letter encrypts to the letter in the same " +
+            "row as it but in a column with the other letter. So, ")
+    p1, p2, c1, c2 = colorChosenDigraph(app, 3, 0, 4, 2, 3, 2, 4, 0, 
+                                        app.rectFillColor, app.rectColor)
+    coloredText = f"{p1}{p2} becomes {c1}{c2}."
+    topY = drawEnteredPlusInputNoElipses(app, topY, text, coloredText, 
+                                  left = gridRight, inputColor = app.rectColor)
+
+    text = "By applying these rules, our message becomes: "
+    topY2 = drawTextbox(app, text, gridBottom, width = app.gridDim)
+
+    finalTopY = max(topY, topY2)
+    
+    # TODO, make each digraph colored by strategy used to encrypt it
+    drawWithElipses(app, app.ciphertextByDigraph, finalTopY, 
+                    color = app.inputColor)
+
+# Colors certain digraphs on the grid to make it clearer for users
+def colorChosenDigraph(app, plain1Row, plain1Col, plain2Row, plain2Col,
+                       cipher1Row, cipher1Col, cipher2Row, cipher2Col, 
+                       fillColor, borderColor):
+    
+    plain1 = app.keyTable[plain1Row][plain1Col]
+    plain2 = app.keyTable[plain2Row][plain2Col]
+    cipher1 = app.keyTable[cipher1Row][cipher1Col]
+    cipher2 = app.keyTable[cipher2Row][cipher2Col]
+    
+    # Color cipher letters first so that if a letter is a plain and cipher
+    # letter, it gets the plain color
+    cipher1.fill = app.resultFillColor
+    cipher1.border = borderColor
+    
+    cipher2.fill = app.resultFillColor
+    cipher2.border = borderColor
+    
+    plain1.fill = fillColor
+    plain1.border = borderColor
+    
+    plain2.fill = fillColor
+    plain2.border = borderColor
+    
+    
+
+    return plain1.name, plain2.name, cipher1.name, cipher2.name
+
 
 #------------------Helpers to help with drawing text----------------
  
@@ -557,8 +657,7 @@ def drawHeading(app, text):
 # Puts the explanation in a textbox and then the user input in a line below
 # Returns the y-coordinate where next line should be
 def drawExplanationPlusOneLine(app, explanation, line, top):
-    lines = drawTextbox(app, explanation, top)
-    topY = top + lines * app.lineSpace * app.fontSize + app.parSpace 
+    topY = drawTextbox(app, explanation, top)
     # To end up below textbox
     
     drawWithElipses(app, line, topY, color = app.inputColor)
@@ -566,14 +665,14 @@ def drawExplanationPlusOneLine(app, explanation, line, top):
 
     return topY
 
-# Wraps text in a label around, returns how many lines long it was
+# Wraps text in a label around, returns top of new line
 def drawTextbox(app, text, top, left = None, width = None, fontSize = None, 
-                color = 'black', returnLines = True):
+                color = 'black', returnNewLineTop = True):
     if (left == None): left = app.margin
     if (width == None): width = app.width - left
     if (fontSize == None): fontSize = app.fontSize
-    widthToHeightRatio = app.fontWidthToHeightRatio
-    fontWidth = fontSize * widthToHeightRatio
+    
+    fontWidth = fontSize * app.fontWidthToHeightRatio
     blockingLength = int(width / fontWidth)
     
     lines = 0
@@ -592,13 +691,14 @@ def drawTextbox(app, text, top, left = None, width = None, fontSize = None,
         top += app.lineSpace * fontSize
         lines += 1
         
-    if returnLines:
-        return lines
+    if returnNewLineTop:
+        return top + app.parSpace
     
     else:
         endYTop = top - app.lineSpace * fontSize
         endX = left + len(firstBlock) * fontWidth
         return endX, endYTop
+
 
 # Makes a one line label. If text is too long, puts ... at end to indicate that
 # not the whole text is being seen. Returns top of next line
@@ -626,16 +726,54 @@ def drawWithElipses(app, text, top, left = None, width = None, fontSize = None,
 
 # Draws blackText first in black, and then the user's input text on the 
 # same line but in a different color. Returns new topY
-def drawEnteredPlusInput(app, topY, blackText, inputText, fontSize = None):
+def drawEnteredPlusInput(app, topY, blackText, inputText, fontSize = None, 
+                         left = None, inputColor = None):
     if (fontSize == None): fontSize = app.fontSize
+    if (left == None): left = app.margin
+    if (inputColor == None): inputColor = app.inputColor
 
-    drawTextbox(app, blackText, topY)
-    widthOfText = len(blackText) * app.fontSize * app.fontWidthToHeightRatio
-    width = app.width - 2 * app.margin - widthOfText # Width for input text
-    drawWithElipses(app, inputText, topY, left = widthOfText + app.margin, 
-                    width = width, color = app.inputColor)
+    endX, endYTop = drawTextbox(app, blackText, topY, left=left, 
+                                returnNewLineTop = False)
+
+    width = app.width - app.margin - endX # Width for input text
+    drawWithElipses(app, inputText, endYTop, left = endX, 
+                    width = width, color = inputColor)
     return topY + app.lineSpace * fontSize + app.parSpace
     
+def drawEnteredPlusInputNoElipses(app, topY, blackText, inputText, 
+                                  fontSize=None, left=None, inputColor=None):
+    if (fontSize == None): fontSize = app.fontSize
+    if (left == None): left = app.margin
+    if (inputColor == None): inputColor = app.inputColor
+
+    endX, endYTop = drawTextbox(app, blackText, topY, left=left, 
+                                returnNewLineTop = False)
+
+    width = app.width - app.margin - endX # Width for input text
+    
+    fontWidth = fontSize * app.fontWidthToHeightRatio
+    
+    if fontWidth * len(inputText) <= width:
+        topY = drawTextbox(app, inputText, endYTop, left = endX, width = width, 
+                           color = inputColor)
+        
+        return topY
+    
+    firstLineStop = int(width / fontWidth)
+    partialLine = inputText[:firstLineStop]
+    
+    if ' ' not in partialLine:
+        topY = endYTop + fontSize * app.lineSpace
+        rest = inputText
+    else:
+        while partialLine[-1] != ' ':
+            partialLine = partialLine[:-1]
+        rest = inputText[len(partialLine):]
+        topY = drawTextbox(app, partialLine, endYTop, left = endX, width = width, 
+                           color = inputColor) - app.parSpace
+
+    topY = drawTextbox(app, rest, topY, left = left, color = inputColor)
+    return topY
 
 
 #-------------Helpers to show intermediate message----------------
@@ -675,6 +813,8 @@ def getCellBounds(app, row, col, gridLeft, gridTop):
 
     return (left, top)
 
+
+
 # Makes a string describing all duplicate letters in key
 # For example is key = tommorow returns 'o and m'
 def makeDuplicateLetterString(key):
@@ -691,6 +831,7 @@ def makeDuplicateLetterString(key):
 
     duplicatesString = ' and '.join(duplicatesList)
     return duplicatesString
+
 
 
 
