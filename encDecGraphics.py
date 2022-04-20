@@ -4,6 +4,7 @@ from cmu_cs3_graphics import *
 import encryptDecrypt
 import string
 import classes
+import crackTable2
 
 class Button(object):
     def __init__(self, cx, cy, width, height, label, use):
@@ -61,6 +62,7 @@ def turnOffAllStates(app):
 
     app.crackInstructsVisible = False
     app.crackingSetupVisible = False
+    app.crackingResultVisible = False
 
     app.nextButtonVisible = False
     app.backButtonVisible = False
@@ -277,7 +279,7 @@ def initializeMessageVars(app):
     app.plaintext = ''
     app.key = ''
     app.ciphertext = ''
-    app.defaultPlaintext = 'This is a secret message to encrypt. Enjoy.'
+    app.defaultPlaintext = "This is a secret message to encrypt. Enjoy. I'm adding more letters here so that cracking is faster."
     app.defaultKey = 'Playfair'
     app.defaultCiphertext = encryptDecrypt.encDecPlayfair(app.defaultPlaintext, 
                                                           app.defaultKey)
@@ -296,7 +298,7 @@ def initializeTextVars(app):
     app.headingHeight = 2 * app.fontSize
     app.headingCy = app.margin + 0.5 * app.headingHeight
     app.inputColor = 'purple'
-    app.color2 = 'green'
+    app.inputColor2 = 'green'
     app.rowColor = 'blue'
     app.rowFillColor = 'lightSkyBlue'
     app.colColor = 'red'
@@ -515,6 +517,9 @@ def nextButtonClicked(mouseX, mouseY, app):
     
     elif app.digraphDecInstructsVisible:
         startDecSummary(app)
+    
+    elif app.crackingSetupVisible:
+        startCrackingResult(app)
 
     
     
@@ -681,7 +686,7 @@ def makeAppKeyTable(app, key):
             if letter in app.key.upper().replace('J', 'I'):
                 color = app.inputColor
             else:
-                color = app.color2
+                color = app.inputColor2
             
             newRowList.append(KeyLetter(letter, color))
         
@@ -696,7 +701,7 @@ def startDigraphEncInstructs(app):
     resetKeyTable(app)
 
     if app.plaintextByDigraph == '':
-        app.plaintextByDigraph = turnDigraphListToString(app.plaintext)
+        app.plaintextByDigraph = makeDigraphString(app.plaintext)
 
     if app.keyTable == None:
         makeAppKeyTable(app, app.key)
@@ -720,12 +725,10 @@ def startEncSummary(app):
     app.mainMenuButtonVisible = True
     
 
-    if app.plaintextByDigraph == '':
-        app.plaintextByDigraph = turnDigraphListToString(app.plaintext)
+    app.plaintextByDigraph = makeDigraphString(app.plaintext)
 
-    if app.ciphertext == '':
-        app.ciphertext = encryptDecrypt.encDecPlayfair(app.plaintext, app.key,
-                                                       mode = 'encrypt')
+    app.ciphertext = encryptDecrypt.encDecPlayfair(app.plaintext, app.key,
+                                                   mode = 'encrypt')
 
     app.encSummaryVisible = True 
 
@@ -741,7 +744,7 @@ def startDecPrep(app):
     turnOffAllStatesButBackNextButtons(app)
 
     if app.ciphertextByDigraph == '':
-        app.ciphertextByDigraph = turnDigraphListToString(app.ciphertext)
+        app.ciphertextByDigraph = makeDigraphString(app.ciphertext)
     
     
     makeAppKeyTable(app, app.key)
@@ -753,7 +756,7 @@ def startDigraphDecInstructs(app):
     turnOffAllStatesButBackNextButtons(app)
 
     if app.ciphertextByDigraph == '':
-        app.ciphertextByDigraph = turnDigraphListToString(app.ciphertext)
+        app.ciphertextByDigraph = makeDigraphString(app.ciphertext)
 
     app.plaintext = encryptDecrypt.encDecPlayfair(app.ciphertext, app.key,
                                                   mode = 'decrypt')
@@ -783,8 +786,20 @@ def startCrackInstructs(app):
 
 def startCrackingSetup(app):
     turnOffAllStatesButBackNextButtons(app)
+    app.plaintextByDigraph = makeDigraphString(app.plaintext)
+    app.ciphertextByDigraph = makeDigraphString(app.ciphertext)
 
     app.crackingSetupVisible = True
+
+def startCrackingResult(app):
+    turnOffAllStates(app)
+    app.crackingResultVisible = True
+    app.keyTable = None
+
+    result = crackTable2.crackKeyTable(app.plaintext, app.ciphertext)
+    # Left off here
+
+
 
 ########################################################
 #                      View
@@ -814,6 +829,8 @@ def redrawAll(app):
     elif app.crackInstructsVisible: drawCrackInstructs(app)
     
     elif app.crackingSetupVisible: drawCrackingSetup(app)
+
+    elif app.crackingResultVisible: drawCrackingResults(app)
 
  
     
@@ -915,7 +932,7 @@ def drawProcessMessageInstructs(app):
     else:
         portion =  " we didn't "   
     text += f' In your case, {portion} have to pad. So we get: '
-    finalMessage = turnDigraphListToString(message)
+    finalMessage = makeDigraphString(message)
     topY = drawExplanationPlusOneLine(app, text, finalMessage, topY)
 
 # Makes screen that explains how keyword becomes a grid
@@ -1148,13 +1165,85 @@ def drawCrackInstructs(app):
     drawInstructionsPage(app, heading, text1, text2)
 
 def drawCrackingSetup(app):
+    # TODO: return error message if plaintext and ciphertext not the same
     topY = drawHeading(app, 'Cracking Set Up')
-    text = ("First we prepare the plaintext and ciphertext by removing " + 
-            "disallowed characters, adding 'X's, and splitting them into " +
+    text = ("First we prepare the plain ciphertexts by removing illegal " + 
+            "characters, adding 'X's, and splitting them into " +
             "digraphs.")
     topY = drawTextbox(app, text, topY)
-    drawEnteredPlusInput(app, 'Entered message ', app.plaintext)
-    #LEFT OFF HERE
+    topY = drawEnteredPlusInput(app, topY, 'Entered message ', app.plaintext)
+    topY -= app.parSpace
+    topY = drawEnteredPlusInput(app, topY, 'becomes: ', app.plaintextByDigraph)
+    topY = drawEnteredPlusInput(app, topY, 'Entered ciphertext ', 
+                                app.ciphertext, inputColor = app.inputColor2)
+    topY -= app.parSpace
+    topY = drawEnteredPlusInput(app, topY, 'becomes: ', app.ciphertextByDigraph, 
+                                inputColor = app.inputColor2)
+
+    
+    text = ("We then map which plaintext digraphs (pairs of letters) encrypt " +
+            "to which ciphertext digraphs.  So for example we get:")
+    topY = drawTextbox(app, text, topY)
+    topY = drawDigraphPairs(app, topY)
+
+    text = ("Based on how Playfair works, we can gather information " +
+            "from these pairs. For example if AB becomes BC then there must " +
+            "be a row or column that contains ‘ABC’. If AB becomes CD and " +
+            "CD encrypts to AB, then these pairs must be found in a " +
+            "rectangle, so A/C and B/D share rows, and A/D and B/C " +
+            "each share a column.")
+    drawTextbox(app, text, topY)
+
+
+def drawDigraphPairs(app, topY):
+    leftX = app.margin
+    blockLen = 2 + 1 + 2 + 2
+    letterWidth = app.fontSize * app.fontWidthToHeightRatio
+    blockWidth = letterWidth * blockLen
+    blocks = int((app.width - 2 * app.margin - 3 * letterWidth) / blockWidth)
+
+    def drawLabelReturnX(text, leftX, topY, color = 'black'):
+        drawLabel(text, leftX, topY, fill = color, align = 'left-top', 
+                  font = app.font, size = app.fontSize)
+        return leftX + letterWidth * len(text)
+
+
+    for i in range(blocks):
+        digraphStart = 3 * i
+        plainDigraph = app.plaintextByDigraph[digraphStart:digraphStart+2]
+        cipherDigraph = app.ciphertextByDigraph[digraphStart:digraphStart+2]
+
+        leftX = drawLabelReturnX(plainDigraph, leftX, topY, color = app.inputColor)
+        leftX = drawLabelReturnX(':', leftX, topY)
+        leftX = drawLabelReturnX(cipherDigraph, leftX, topY, color = app.inputColor2)
+        leftX = drawLabelReturnX(' '*2, leftX, topY)
+
+    drawLabelReturnX('etc', leftX, topY)
+
+    return topY + app.fontSize * app.lineSpace + app.parSpace
+
+def drawCrackingResults(app):
+    topY = drawHeading(app, 'Cracking Results')
+    text = ("By using the strategies outlined in the last screen, we get a " +
+            "lot of information about which letters are in rows or columns " +
+            "together (either consecutively or just in general). We use this " +
+            "information to play around with placing letters, kind of " +
+            "like what is done in a Sudoku. We end up with this grid: "+
+            "(it will display once found, may take time)")
+    topY = drawTextbox(app, text, topY)
+
+    gridRight, gridBottom = drawGrid(app, gridTop = topY)
+
+    text = ("This may not be the grid you used for encrypting and decrypting. "+
+            "This is because in Playfair, there are many grids that yield the "+
+            "same encryption (there are at least 24 grids besides this one " +
+            "that would work). Nevertheless, this is a 'correct' grid, " +
+            "meaning that using this grid to encrypt your original message, "+
+            "will yield the coded message you entered.")
+    drawTextbox(app, text, topY, left = gridRight)
+
+
+
     
 #----------------Drawing functions used in multiple modes---------
 
@@ -1275,8 +1364,9 @@ def drawTextbox(app, text, top, left = None, width = None, fontSize = None,
             text = []
         else:
             firstBlock = text[:blockingLength] 
-            while firstBlock[-1] != ' ':
-                firstBlock = firstBlock[:-1]
+            if ' ' in firstBlock:
+                while firstBlock[-1] != ' ':
+                    firstBlock = firstBlock[:-1]
             text = text[len(firstBlock): ]
         drawLabel(firstBlock, left, top, align='left-top', size=fontSize, 
                   font=app.font, fill = color)
@@ -1384,8 +1474,9 @@ def putSpacesInAndKillJs(message):
 
     return result
 
+# Turns the message into a digraph list (which removes everything bad)
 # Turns the digraph list to a printable readable string
-def turnDigraphListToString(message):
+def makeDigraphString(message):
     digraphList = encryptDecrypt.makeDigraphL(message)
     result = ''
     for digraph in digraphList:
