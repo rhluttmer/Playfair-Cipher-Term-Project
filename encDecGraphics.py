@@ -36,8 +36,9 @@ def onAppStart(app):
     turnOffAllStates(app)
     app.introVisible = True
     
-
+    app.mustFindKey = False
     app.background = 'mintCream'
+    app.stepsPerSecond = 1
     
     initializeGridVars(app)
     initializeButtons(app)
@@ -279,7 +280,7 @@ def initializeMessageVars(app):
     app.plaintext = ''
     app.key = ''
     app.ciphertext = ''
-    app.defaultPlaintext = "This is a secret message to encrypt. Enjoy. I'm adding more letters here so that cracking is faster."
+    app.defaultPlaintext = "This is a secret message to encrypt. Enjoy.  CS is great"
     app.defaultKey = 'Playfair'
     app.defaultCiphertext = encryptDecrypt.encDecPlayfair(app.defaultPlaintext, 
                                                           app.defaultKey)
@@ -555,6 +556,9 @@ def backButtonClicked(mouseX, mouseY, app):
 
     elif app.crackingSetupVisible:
         startCrackInstructs(app)
+    
+    elif app.crackingResultVisible:
+        startCrackingSetup(app)
 
     
     return True
@@ -615,6 +619,26 @@ def onMouseMove(app, mouseX, mouseY):
         else:
             button.hovering = False
     
+
+def onStep(app):
+    if app.crackingResultVisible and app.mustFindKey:
+        app.mustFindKey = False
+        makeCrackKeyTable(app)
+
+def makeCrackKeyTable(app):
+    crackedResult = crackTable2.crackKeyTable(app.plaintext, app.ciphertext)
+
+    newTable = []
+    for rowList in crackedResult:
+        newRowList = []
+        for letter in rowList:
+            
+            newRowList.append(KeyLetter(letter, 'black'))
+        
+        newTable.append(newRowList)
+    
+    app.keyTable = newTable
+   
 
 
 #------------------onKeyPress -------------------
@@ -793,14 +817,13 @@ def startCrackingSetup(app):
 
 def startCrackingResult(app):
     turnOffAllStates(app)
-    app.crackingResultVisible = True
+    app.backButtonVisible = True
     app.keyTable = None
+    app.crackingResultVisible = True
+    app.mustFindKey = True
+    
 
-    result = crackTable2.crackKeyTable(app.plaintext, app.ciphertext)
-    # Left off here
-
-
-
+    
 ########################################################
 #                      View
 ########################################################
@@ -1242,6 +1265,9 @@ def drawCrackingResults(app):
             "will yield the coded message you entered.")
     drawTextbox(app, text, topY, left = gridRight)
 
+    
+
+
 
 
     
@@ -1260,18 +1286,19 @@ def drawInstructionsPage(app, heading, text1, text2):
 
 # Draws the 5 x 5 encryption grid (without letters)
 # Returns right and bottom sides of grid, with margin
-def drawGrid(app, gridLeft = None, gridTop = None):
+def drawGrid(app, gridLeft = None, gridTop = None, keyTable = None):
     if (gridLeft == None): gridLeft = app.defaultGridLeft
     if (gridTop == None): gridTop = app.defaultGridTop
+    if (keyTable == None): keyTable = app.keyTable
 
     # Modified from Lecture 3 Animations Case Studies Notes
     for row in range(app.rowsCols):
         for col in range(app.rowsCols):
             cellLeft, cellTop = getCellBounds(app, row, col, gridLeft, gridTop)
             
-            if app.keyTable != None:
-                fill = app.keyTable[row][col].fill
-                border = app.keyTable[row][col].border
+            if keyTable != None:
+                fill = keyTable[row][col].fill
+                border = keyTable[row][col].border
             else:
                 fill = None
                 border = 'black'
@@ -1283,8 +1310,8 @@ def drawGrid(app, gridLeft = None, gridTop = None):
                      borderWidth = borderWidth, border = border)
             
             # Put letters in grid if we know the letters
-            if app.keyTable != None:
-                letter = app.keyTable[row][col]
+            if keyTable != None:
+                letter = keyTable[row][col]
                 cx, cy = cellLeft + app.boxDim / 2, cellTop + app.boxDim / 2
                 drawLabel(letter.name, cx, cy, size = app.boxDim, 
                           font = app.font, fill = letter.color)

@@ -26,6 +26,8 @@ def crackKeyTable(plaintext, ciphertext):
     # Makes dictionary of what each digraph encrypts to
     digraphMap = makeDigraphMap(plaintext, ciphertext)
     
+    print(digraphMap)
+
     # Make a dictionary that maps letters to letter instances that store
     # all the information about how the letter encrypts / decrypts
     letterDict, rowSet, colSet, rowOrColSet = createAndPopulateLetterDict(digraphMap)
@@ -169,6 +171,10 @@ def outerBacktrack(board, rowSet, colSet, rowOrColSet, digraphMap,
 
     # Recursive case. Try to place a row, if none then place a col
     else:
+        #if 'ENU' not in rowOrColSet:
+        #    print('here', rowOrColSet, rowSet, colSet, board)
+
+
         if len(rowSet) != 0:
             return checkPlaceSolveRow(board, digraphMap, letterDict, rowSet,
                                       colSet, rowOrColSet, lettersPlaced)
@@ -178,7 +184,10 @@ def outerBacktrack(board, rowSet, colSet, rowOrColSet, digraphMap,
                                       colSet, rowOrColSet, lettersPlaced)
 
         else: # we know rowsOrCols is nonepty, otherwise returned in base case
+            #if 'ENU' not in rowOrColSet:
+            #    print('entered else')
             rowOrCol = rowOrColSet.pop()
+            
 
             rowSet.add(rowOrCol)
             # This function will pop entry from rowSet, which has to be
@@ -193,8 +202,19 @@ def outerBacktrack(board, rowSet, colSet, rowOrColSet, digraphMap,
             rowSet.remove(rowOrCol)
             # So return whether there is a solution treating it as col
             colSet.add(rowOrCol)
-            return checkPlaceSolveCol(board, digraphMap, letterDict, rowSet,
+
+            #print('rowOrCol', rowOrCol)
+            #print('col', board)
+            #print()
+            soln = checkPlaceSolveCol(board, digraphMap, letterDict, rowSet,
                                       colSet, rowOrColSet, lettersPlaced)
+
+            if soln != None:
+                return soln
+
+            rowOrColSet.add(rowOrCol)
+            colSet.remove(rowOrCol)
+            return None
 
  
 # Assumes rowSet is nonempty, removes an arbitrary rowstring
@@ -211,13 +231,20 @@ def checkPlaceSolveRow(board, digraphMap, letterDict,
             # Check that board has free spaces for row
             if not canPutRowInBoard(board, len(board), rowString, 
                                     row, col, lettersPlaced):
+                #print('failed placement', rowString)
                 continue
-    
+            
             newBoard = putInRow(board, rowString, row, col)
+            #print(newBoard)
 
             # Don't bother placing if not legal
             if not isLegalDigraphwise(newBoard, digraphMap, newLettersPlaced):
                 continue
+            
+            #print('passed legality')
+            #print(newBoard)
+            #print(rowSet, colSet, rowOrColSet)
+            #print()
 
             soln = outerBacktrack(newBoard, rowSet, colSet, rowOrColSet, 
                                   digraphMap, letterDict, newLettersPlaced)
@@ -243,6 +270,11 @@ def checkPlaceSolveCol(board, digraphMap, letterDict,
     colString = colSet.pop()
     newLettersPlaced = lettersPlaced | set(colString)
     
+    #sampleBoard = [[0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0]]
+    #if board == sampleBoard:
+        #print(colString)
+
+    
     # Loop through starting locations
     boardDim = len(board)
     for row in range(boardDim):
@@ -250,17 +282,29 @@ def checkPlaceSolveCol(board, digraphMap, letterDict,
             # Check that board has free spaces for row
             if not canPutColInBoard(board, len(board), colString, 
                                     row, col, lettersPlaced):
+                #if board == sampleBoard:
+                #    print("couldn't place")
                 continue
     
             newBoard = putInCol(board, colString, row, col)
+            #if board == sampleBoard:
+            #    print(newBoard)
 
             # Don't bother placing if not legal
             if not isLegalDigraphwise(newBoard, digraphMap, newLettersPlaced):
+                #if board == sampleBoard:
+                #    print('not legal')
+                #    print()
                 continue
+
+            #if board == sampleBoard:
+            #    print('legal')
+            #    print()
 
             soln = outerBacktrack(newBoard, rowSet, colSet, rowOrColSet, 
                                   digraphMap, letterDict, newLettersPlaced)
-    
+            #if board == sampleBoard:
+            #    print(soln)
             if soln != None:
                 return soln
 
@@ -360,6 +404,7 @@ def isLegalDigraphwise(board, digraphMap, lettersPlaced):
             # they must be in the same spot as the solution letters 
             if ((cipherLet1 in lettersPlaced and solLet1 != cipherLet1)
                 or (cipherLet2 in lettersPlaced and solLet2 != cipherLet2)):
+                #print(plainDigraph, cipherDigraph)
                 return False
     return True
 
@@ -559,11 +604,11 @@ def indexOf1stLetterAlphabetically(row):
 #                               main
 ###########################################################################
 
-
+'''
 def main():
 
-    plaintext = 'This is a test message for demonstration. Here is a word with if i just keep typing and add random stuff will this work '
-    ciphertext = encryptDecrypt.encDecPlayfair(plaintext, 'sierra')
+    plaintext = "Th is is as ec re tm es sa ge to en cr yp tE nj oy."
+    ciphertext = encryptDecrypt.encDecPlayfair(plaintext, 'playfair')
     #print(ciphertext)
     
     result = crackKeyTable(plaintext, ciphertext)
@@ -574,4 +619,4 @@ def main():
 
 
 main()
-
+'''
