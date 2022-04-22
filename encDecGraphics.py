@@ -18,10 +18,10 @@ class Button(object):
         self.use = use
 
 class KeyLetter(object):
-    def __init__(self, name, color):
+    def __init__(self, name, color, fill = None):
         self.name = name
         self.color = color
-        self.fill = None
+        self.fill = fill
         self.border = 'black'
     
     def __repr__(self):
@@ -44,7 +44,6 @@ def onAppStart(app):
     initializeButtons(app)
     initializeMessageVars(app)
     initializeTextVars(app)
-
 
 # Makes every isVisible state false
 def turnOffAllStates(app):
@@ -77,7 +76,7 @@ def turnOffAllStatesButBackNextButtons(app):
     app.nextButtonVisible = True
     app.backButtonVisible = True
 
-
+# Initializes parameter relating to grid, including box width and grid dimension
 def initializeGridVars(app):
     app.rowsCols = 5
     app.gridDim = min(app.width, app.height) / 2
@@ -88,6 +87,47 @@ def initializeGridVars(app):
 
     app.keyTable = None
 
+    # These are colors that boxes in the key grid can be filled
+    app.colFillColor = 'salmon'
+    app.rectColor = 'green'
+    app.rectFillColor = 'lightGreen'
+    app.resultFillColor = 'lemonChiffon'
+
+# Initializes variables related to the plaintext / key / ciphertext
+# Encluding their default values
+def initializeMessageVars(app):
+    app.plaintext = ''
+    app.key = ''
+    app.ciphertext = ''
+    app.defaultPlaintext = "This is a secret message to encrypt. Enjoy.  CS is great"
+    app.defaultKey = 'Playfair'
+    app.defaultCiphertext = encryptDecrypt.encDecPlayfair(app.defaultPlaintext, 
+                                                          app.defaultKey)
+    app.plaintextByDigraph = ''
+    app.ciphertextByDigraph = ''
+
+# Initializes variables related to the font, including font, size, font colors
+def initializeTextVars(app):
+    # This is used so that I know how wide a message will be
+    # With non-monospace font, the textbox function wouldn't work well
+    app.font = 'monospace'
+
+    # I couldn't find it on the CS academy docs, so I used this source
+    # to find the width to height ratio https://code-examples.net/en/q/123a6fd
+    app.fontWidthToHeightRatio = 0.6
+
+    app.fontSize = app.height / 25
+    app.headingCx = app.width / 2
+    app.headingHeight = 2 * app.fontSize
+    app.headingCy = app.margin + 0.5 * app.headingHeight
+    app.inputColor = 'purple'
+    app.inputColor2 = 'green'
+    app.rowColor = 'blue'
+    app.rowFillColor = 'lightSkyBlue'
+    app.colColor = 'red'
+    app.lineSpace = 1.15
+    app.parSpace = 0.5 * app.fontSize
+             
 #-------------------Buttons---------------------
 
 # Create all buttons
@@ -99,7 +139,6 @@ def initializeButtons(app):
     initializeIntroButtons(app)
     initializeEncryptButtons(app)
     initializeDecryptButtons(app)
-    
     initializeCrackButtons(app)
     initializeBackNextJumpButtons(app)
     initializeEncSummaryButtons(app)
@@ -191,6 +230,8 @@ def initializeCrackButtons(app):
     app.buttons.extend([app.enterMessageCrackButton, app.enterEncMessageCrackButton,
                        app.startCrackButton, app.useDefaultsCrackButton])
 
+# Make the back, next, jump, and menu buttons
+# (Basically, this is meant for buttons that show up on multiple screens)
 def initializeBackNextJumpButtons(app):
     # Make these buttons smaller than the defaults
     backNextHeight  = 0.5 * app.buttonHeight 
@@ -219,7 +260,8 @@ def initializeBackNextJumpButtons(app):
                        'Main Menu', 'main')
     app.buttons.append(app.mainMenuButton)
 
-
+# Makes buttons for the last encryption screen (where users can take the
+# same message and see how it would be decrypted or cracked)
 def initializeEncSummaryButtons(app):
     # Make these buttons smaller than the defaults
     buttonHeight  = 0.5 * app.buttonHeight 
@@ -238,8 +280,8 @@ def initializeEncSummaryButtons(app):
                                        'Crack', 'encSummary')
     app.buttons.append(app.encSummaryCrackButton)
 
-
-
+# Makes buttons for the decryption screen (where users can choose to see
+# how their message would have encrypted or how to crack it)
 def initializeDecSummaryButtons(app):
     # Make these buttons smaller than the defaults
     buttonHeight  = 0.5 * app.buttonHeight 
@@ -258,7 +300,9 @@ def initializeDecSummaryButtons(app):
                                        'Crack', 'decSummary')
     app.buttons.append(app.decSummaryCrackButton)
 
-      
+# On the decryption screen, users can opt to see more in-depth views of how
+# the keygrid or message are prepared. By clicking on these buttons,
+# they are taken to the more detailed screens
 def initializeDecPrepButtons(app):
     # Make these buttons smaller than the defaults
     buttonWidth = (app.width - app.gridDim - 4 * app.margin) / 2
@@ -275,50 +319,14 @@ def initializeDecPrepButtons(app):
                                   'Make Key Grid', 'decPrep')
     app.buttons.append(app.decPrepKeyButton)
    
-
-def initializeMessageVars(app):
-    app.plaintext = ''
-    app.key = ''
-    app.ciphertext = ''
-    app.defaultPlaintext = "This is a secret message to encrypt. Enjoy.  CS is great"
-    app.defaultKey = 'Playfair'
-    app.defaultCiphertext = encryptDecrypt.encDecPlayfair(app.defaultPlaintext, 
-                                                          app.defaultKey)
-    app.plaintextByDigraph = ''
-    app.ciphertextByDigraph = ''
-
-def initializeTextVars(app):
-    app.font = 'monospace'
-
-    # I couldn't find it on the CS academy docs, so I used this source
-    # to find the width to height ratio https://code-examples.net/en/q/123a6fd
-    app.fontWidthToHeightRatio = 0.6
-
-    app.fontSize = app.height / 25
-    app.headingCx = app.width / 2
-    app.headingHeight = 2 * app.fontSize
-    app.headingCy = app.margin + 0.5 * app.headingHeight
-    app.inputColor = 'purple'
-    app.inputColor2 = 'green'
-    app.rowColor = 'blue'
-    app.rowFillColor = 'lightSkyBlue'
-    app.colColor = 'red'
-    app.colFillColor = 'salmon'
-    app.rectColor = 'green'
-    app.rectFillColor = 'lightGreen'
-    app.resultFillColor = 'lemonChiffon'
-    app.lineSpace = 1.15
-    app.parSpace = 0.5 * app.fontSize
-    
-                                  
-
+      
 ########################################################
 #                      Control
 ########################################################
 
-
 #-------------------onMousePress and helpers-----------------
 
+# Deals with all buttons clicks, calling many helpers
 def onMousePress(app, mouseX, mouseY):
     
     # Have an or statment so that through short circuit evaluation, 
@@ -398,6 +406,9 @@ def encInstructsButtonsClicked(mouseX, mouseY, app):
 
     return False
 
+# Returns True if click was in the 'Crack' or 'Decrypt' buttons on the
+# encryption screen (the ones that will run crack or decrypt using what
+# the user had previously entered to encrypt)
 def encSummaryButtonsClicked(mouseX, mouseY, app):
     if not app.encSummaryVisible:
         return False
@@ -409,8 +420,6 @@ def encSummaryButtonsClicked(mouseX, mouseY, app):
     if mouseInButton(mouseX, mouseY, app.encSummaryCrackButton):
         startCrackingSetup(app)
         return True
-    
-    
         
 # Returns True if click was in any active button on decryption instructions
 # screen, initiates needed actions
@@ -446,8 +455,7 @@ def decInstructsButtonsClicked(mouseX, mouseY, app):
 
     return False
 
-
-
+# Returns True if button on the decryption summary screen was clicked
 def decSummaryButtonsClicked(mouseX, mouseY, app):
     if not app.decSummaryVisible:
         return False
@@ -460,8 +468,6 @@ def decSummaryButtonsClicked(mouseX, mouseY, app):
         startCrackingSetup(app)
         return True
    
-
-
 # Returns True if click was in any active button on crack instructions
 # screen, initiates needed actions
 def crackInstructsButtonsClicked(mouseX, mouseY, app):
@@ -497,8 +503,6 @@ def crackInstructsButtonsClicked(mouseX, mouseY, app):
     return False
 
 # Brings user to the next page when they click the next button
-# TODO: Make this better coded by having list of states in order. Then works
-# for back button as well
 def nextButtonClicked(mouseX, mouseY, app):
     if (not mouseInButton(mouseX, mouseY, app.nextButton) or 
         not app.nextButtonVisible):
@@ -563,6 +567,7 @@ def backButtonClicked(mouseX, mouseY, app):
     
     return True
 
+# Brings user back to main menu, returns True if button was clicked and active
 def mainMenuButtonClicked(mouseX, mouseY, app):
     if (mouseInButton(mouseX, mouseY, app.mainMenuButton) and 
         app.mainMenuButtonVisible):
@@ -572,6 +577,7 @@ def mainMenuButtonClicked(mouseX, mouseY, app):
         
     return False
  
+ # Makes the user 'jump' back to the decryption screen
 def jumpButtonsClicked(mouseX, mouseY, app):
     if (mouseInButton(mouseX, mouseY, app.decPrepMessageButton) and
         app.decPrepVisible): 
@@ -597,7 +603,7 @@ def jumpButtonsClicked(mouseX, mouseY, app):
     
     return False
 
-    
+ # Helper function to determine whether the click falls into a button or not   
 def mouseInButton(mouseX, mouseY, button):
     if not button.on:
         return False
@@ -607,9 +613,10 @@ def mouseInButton(mouseX, mouseY, button):
     top = button.cy - button.height / 2
     bottom = button.cy + button.height / 2
     return left <= mouseX <= right and top <= mouseY <= bottom
-#---------------------onMouseMove and helpers------
 
+#------------onMouseMove and onKeyPress------
 
+# Used to change the button color when a mouse hovers over it
 def onMouseMove(app, mouseX, mouseY):
     for button in app.buttons:
         if not button.on:
@@ -620,47 +627,23 @@ def onMouseMove(app, mouseX, mouseY):
             button.hovering = False
     
 
-def onStep(app):
-    if app.crackingResultVisible and app.mustFindKey:
-        app.mustFindKey = False
-        makeCrackKeyTable(app)
-
-def makeCrackKeyTable(app):
-    crackedResult = crackTable2.crackKeyTable(app.plaintext, app.ciphertext)
-
-    newTable = []
-    for rowList in crackedResult:
-        newRowList = []
-        for letter in rowList:
-            
-            newRowList.append(KeyLetter(letter, 'black'))
-        
-        newTable.append(newRowList)
-    
-    app.keyTable = newTable
-   
-
-
-#------------------onKeyPress -------------------
-
+# Used for cheats
 def onKeyPress(app, key):
     # Bring to grid screen
     if key == 'g':
-        app.plaintext = 'How are you doing?'
+        app.plaintext = 'How are you doing? Im okay today'
         app.key = 'computer'
 
-        
-        
         startMakeGridInstructs(app)
         
     # Bring to process message screen
     if key == 'p':
-        app.plaintext = app.defaultPlaintext + 'more letters here for length'
+        app.plaintext = app.defaultPlaintext
         app.key = app.defaultKey
         
         startProcessMessageInstructs(app)
         
-
+    # Brings user to main menu
     if key == 'm':
         turnOffAllStates(app)
         app.introVisible = True
@@ -670,12 +653,11 @@ def onKeyPress(app, key):
 #----------Start State Functions and their helpers----------
 # They set the correct state and make all variables needed for drawing
 
+# Makes screeen where user enters encryption inputs visible
 def startEncInstructs(app):
     turnOffAllStates(app)
     app.encInstructsVisible = True
     
-    
-
 # Prepares state for the screen that shows how text of a message is processed
 # to prepare for encryption / decryption
 def startProcessMessageInstructs(app, mode = 'encrypt'):
@@ -687,7 +669,6 @@ def startProcessMessageInstructs(app, mode = 'encrypt'):
         app.encrypting = False
     app.processMessageInstructsVisible = True
     
-
 # Prepares for the state that shows how the keyword is put into a grid
 def startMakeGridInstructs(app):
     turnOffAllStatesButBackNextButtons(app)
@@ -756,14 +737,13 @@ def startEncSummary(app):
 
     app.encSummaryVisible = True 
 
-
+# Makes the screen that letters the user enter decryption inputs visible
 def startDecInstructs(app):
     turnOffAllStates(app)
     app.decInstructsVisible = True
     
-    
-
-
+# Makes the screen that explains how the ciphertext and keygrid are prepared
+# for encryption visible
 def startDecPrep(app):
     turnOffAllStatesButBackNextButtons(app)
 
@@ -776,6 +756,7 @@ def startDecPrep(app):
 
     app.decPrepVisible = True
 
+# Prepares for the state that explains how to decrypt digraphs 
 def startDigraphDecInstructs(app):
     turnOffAllStatesButBackNextButtons(app)
 
@@ -788,7 +769,9 @@ def startDigraphDecInstructs(app):
 
     resetKeyTable(app)
     app.digraphDecInstructsVisible = True
-    
+
+# Prepares for the state that explains how decryption was done and what
+# the obtained plaintext was  
 def startDecSummary(app):
     turnOffAllStates(app)
     app.backButtonVisible = True
@@ -796,18 +779,14 @@ def startDecSummary(app):
 
     app.plaintext = encryptDecrypt.encDecPlayfair(app.ciphertext, app.key, 
                                                       mode = 'decrypt')
-
     app.decSummaryVisible = True 
 
-
-
-
+# Makes the screen where the user enters inputs for the crack function visible
 def startCrackInstructs(app):
     turnOffAllStates(app)
     app.crackInstructsVisible = True
     
-
-
+# Makes screen that explains how to set up digraph pairs for cracking visible
 def startCrackingSetup(app):
     turnOffAllStatesButBackNextButtons(app)
     app.plaintextByDigraph = makeDigraphString(app.plaintext)
@@ -815,19 +794,78 @@ def startCrackingSetup(app):
 
     app.crackingSetupVisible = True
 
+# Makes screen that shows the cracked key grid visible
+# Importantly, this function does not actually start trying to crack,
+# for that onStep (below) is used
 def startCrackingResult(app):
     turnOffAllStates(app)
     app.backButtonVisible = True
+    app.mainMenuButtonVisible = True
     app.keyTable = None
     app.crackingResultVisible = True
     app.mustFindKey = True
     
+# This is used for cracking. If in startCrackResults we immediately call
+# crackTable2, then the graphics don't show the next screen until the result
+# is found. By waiting for a step (1 second) to start trying to crack, the
+# screen with the explanation loads first, and then once cracked, the keygrid
+# will appear
+def onStep(app):
+    # mustFindKey is used so that we don't restart the cracking process
+    # every second, we only want to call it once
+    if app.crackingResultVisible and app.mustFindKey:
+        app.mustFindKey = False
+        makeCrackKeyTable(app)
+
+# This finds the result and turns it into a form that the drawGrid function
+# can interperet (it needs to be a list of KeyLetter instances)
+def makeCrackKeyTable(app):
+    crackedResult = crackTable2.crackKeyTable(app.plaintext, app.ciphertext)
+
+    endRow, endCol = findEndOfKeyWord(crackedResult)
+
+    inKeyWord = True
+
+    newTable = []
+    for row in range(len(crackedResult)):
+        newRowList = []
+        for col in range(len(crackedResult[0])):
+            if row == endRow and col == endCol:
+                inKeyWord = False
+
+            letter = crackedResult[row][col]
+            fill = app.resultFillColor if (inKeyWord) else None
+            newRowList.append(KeyLetter(letter, 'black', fill = fill))
+
+            
+        
+        newTable.append(newRowList)
+    
+    app.keyTable = newTable
+   
+# Returns the row and column after which everything is in alphabetical order
+# This is likely the row and column right after the key word, where we start
+# filling the grid alphabetically. Helper for makeCrackKeyTable
+def findEndOfKeyWord(L):
+    lastLetter = chr(ord('A') - 1)
+    afterEndRow = 0
+    afterEndCol = 0
+
+    for row in range(len(L)):
+        for col in range(len(L[0])):
+            newLetter = L[row][col]
+            if newLetter < lastLetter:
+                afterEndRow, afterEndCol = row, col
+            lastLetter = newLetter
+    
+    return afterEndRow, afterEndCol
 
     
 ########################################################
 #                      View
 ########################################################
 
+# Calls all drawing helper functions
 def redrawAll(app):
     if app.introVisible: drawIntroScreen(app)
     
@@ -907,7 +945,7 @@ def drawButtons(app):
 
 #---------------Encryption Screens-----------------------
 
-# Draws the instructions for encryption
+# Draws the instructions for encryption (the screen where the user enters input)
 def drawEncInstructs(app):
     heading = 'Encryption'
     text1 = ('Please enter your message and keywords and then click start.'+
@@ -998,7 +1036,7 @@ def drawDigraphEncInstructs(app):
     text = "We encrypt two letters at a time with the following rules:"
     topY = drawTextbox(app, text, topY, gridRight)
 
-    # TODO: Add arrows onto digraph
+    # TODO: Add arrows onto digram
 
     # In rows
     text = ("1. Letters in the same row encrypt to the letters to their " +
@@ -1035,7 +1073,7 @@ def drawDigraphEncInstructs(app):
     drawWithElipses(app, app.ciphertextByDigraph, finalTopY, 
                     color = app.inputColor)
 
-
+# Makes a screen summarizing the encryption steps taken
 def drawEncSummary(app):
     topY = drawHeading(app, 'Encryption Summary')
     
@@ -1069,7 +1107,7 @@ def drawEncSummary(app):
     topY = drawTextbox(app, text, topY)
 
 #---------------Decryption screens---------------
-# Draws the instructions for encryption
+# Draws the instructions for decryption
 def drawDecInstructs(app):
     # Intro message
     heading = 'Decryption'
@@ -1079,7 +1117,7 @@ def drawDecInstructs(app):
     text2 = 'Or if you prefer, click below to use the default message and key.'
     drawInstructionsPage(app, heading, text1, text2)
 
-
+# Draws the screen to say how the message was processed and keygrid was made
 def drawDecPrep(app):
     topY = drawHeading(app, 'Preparing Message and Key')
 
@@ -1101,7 +1139,7 @@ def drawDecPrep(app):
             "click the ‘next’ button to proceed.")
     topY = drawTextbox(app, text, gridTop, left = gridRight)
 
-# Makes screen that explains three rules for encryption
+# Makes screen that explains three rules for decryption
 def drawDigraphDecInstructs(app):
     # Draw heading, user input, and grid
     topY = drawHeading(app, 'Decrypting Digraphs')
@@ -1123,7 +1161,7 @@ def drawDigraphDecInstructs(app):
     topY =drawEnteredPlusInputNoElipses(app, topY, text, coloredText, 
                                   left = gridRight, inputColor = app.rowColor)
     # In same col
-    text = ("2. Letters in the same column encrypt to the letters directly " +
+    text = ("2. Letters in the same column decrypt to the letters directly " +
             "above them. For example, ")
     p1, p2, c1, c2 = colorChosenDigraph(app, 2, 3, 1, 3, 1, 3, 0, 3,  
                                         app.colFillColor, app.colColor)
@@ -1132,7 +1170,7 @@ def drawDigraphDecInstructs(app):
                                   left = gridRight, inputColor = app.colColor)
 
     # In rectangle
-    text = ("3. Otherwise, each letter encrypts to the letter in the same " +
+    text = ("3. Otherwise, each letter decrypts to the letter in the same " +
             "row as it but in a column with the other letter. So, ")
     p1, p2, c1, c2 = colorChosenDigraph(app, 3, 2, 4, 0, 3, 0, 4, 2,  
                                         app.rectFillColor, app.rectColor)
@@ -1145,11 +1183,12 @@ def drawDigraphDecInstructs(app):
 
     finalTopY = max(topY, topY2)
     
-    # TODO, make each digraph colored by strategy used to encrypt it
+    # TODO, make each digraph colored by strategy used to decrypt it
     drawWithElipses(app, app.plaintextByDigraph, finalTopY, 
                     color = app.inputColor)
 
-
+# Draws the screen showing the decrypted message and explaining how to
+# interperet it
 def drawDecSummary(app):
     topY = drawHeading(app, 'Decryption Summary')
     text = 'So we end up with the decoded message: '
@@ -1175,9 +1214,8 @@ def drawDecSummary(app):
     
     
 
-    
-
 #-------------------Cracking screens-----------
+# Makes the screen where the user enter inputs for the cracking program
 def drawCrackInstructs(app):
     heading = 'Cracking the Cipher'
     text1 = ('Please enter the message and its encryption and then click '+
@@ -1187,6 +1225,7 @@ def drawCrackInstructs(app):
     
     drawInstructionsPage(app, heading, text1, text2)
 
+# Shows how to set up for cracking
 def drawCrackingSetup(app):
     # TODO: return error message if plaintext and ciphertext not the same
     topY = drawHeading(app, 'Cracking Set Up')
@@ -1217,20 +1256,24 @@ def drawCrackingSetup(app):
             "each share a column.")
     drawTextbox(app, text, topY)
 
-
+# On the cracking srtup screen, draws pairs of plaintext digraphs and the
+# ciphertext digraphs they encrypt to. Returns top of new line
 def drawDigraphPairs(app, topY):
+    # Figure out how many pairs total can be drawn
     leftX = app.margin
     blockLen = 2 + 1 + 2 + 2
     letterWidth = app.fontSize * app.fontWidthToHeightRatio
     blockWidth = letterWidth * blockLen
     blocks = int((app.width - 2 * app.margin - 3 * letterWidth) / blockWidth)
 
+    # Helper function to draw one colored text and return end position
     def drawLabelReturnX(text, leftX, topY, color = 'black'):
         drawLabel(text, leftX, topY, fill = color, align = 'left-top', 
                   font = app.font, size = app.fontSize)
         return leftX + letterWidth * len(text)
 
 
+    # Actually draws blocks
     for i in range(blocks):
         digraphStart = 3 * i
         plainDigraph = app.plaintextByDigraph[digraphStart:digraphStart+2]
@@ -1243,8 +1286,10 @@ def drawDigraphPairs(app, topY):
 
     drawLabelReturnX('etc', leftX, topY)
 
+    # Return the top of the new line
     return topY + app.fontSize * app.lineSpace + app.parSpace
 
+# Draws the screen that displays the cracked key grid
 def drawCrackingResults(app):
     topY = drawHeading(app, 'Cracking Results')
     text = ("By using the strategies outlined in the last screen, we get a " +
@@ -1257,18 +1302,14 @@ def drawCrackingResults(app):
 
     gridRight, gridBottom = drawGrid(app, gridTop = topY)
 
-    text = ("This may not be the grid you used for encrypting and decrypting. "+
+    text = ("On the grid, a possible key word is highlighted. "+
+            "This may not be the grid used to encrypt the message. "+
             "This is because in Playfair, there are many grids that yield the "+
             "same encryption (there are at least 24 grids besides this one " +
             "that would work). Nevertheless, this is a 'correct' grid, " +
             "meaning that using this grid to encrypt your original message, "+
             "will yield the coded message you entered.")
     drawTextbox(app, text, topY, left = gridRight)
-
-    
-
-
-
 
     
 #----------------Drawing functions used in multiple modes---------
@@ -1448,7 +1489,8 @@ def drawEnteredPlusInput(app, topY, blackText, inputText, fontSize = None,
     drawWithElipses(app, inputText, endYTop, left = endX, 
                     width = width, color = inputColor)
     return topY + app.lineSpace * fontSize + app.parSpace
-    
+
+# This works like drawEnteredPlusInput except doesn't add ellipses at end 
 def drawEnteredPlusInputNoElipses(app, topY, blackText, inputText, 
                                   fontSize=None, left=None, inputColor=None):
     if (fontSize == None): fontSize = app.fontSize
@@ -1523,18 +1565,28 @@ def getCellBounds(app, row, col, gridLeft, gridTop):
     return (left, top)
 
 # Makes a string describing all duplicate letters in key
-# For example is key = tommorow returns 'o and m'
+# For example is key = TOMORROW returns 'one O and one M'
 def makeDuplicateLetterString(key):
     seen = set()
     duplicatesList = []
+    duplicatesDict = {}
     for letter in key:
         if letter in seen:
-            duplicatesList.append(letter)
+            duplicatesDict[letter] = duplicatesDict.get(letter, 0) + 1
         else:
             seen.add(letter)
     
-    if len(duplicatesList) == 0:
+    if len(duplicatesDict) == 0:
         return 'nothing'
+
+    duplicatesList = []
+    for letter in duplicatesDict:
+        letterCount = duplicatesDict[letter]
+        if letterCount == 1:
+            duplicatesList.append(f'one {letter}')
+        else:
+            duplicatesList.append(f"{letterCount} {letter}'s")
+
 
     duplicatesString = ' and '.join(duplicatesList)
     return duplicatesString
