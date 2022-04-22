@@ -901,11 +901,19 @@ def redrawAll(app):
 def drawIntroScreen(app):
     # Intro message
     text = 'Playfair Cipher!'
-    drawHeading(app, text)
-    
+    topY = drawHeading(app, text)
+    '''
     centerX, topY = app.width / 2, app.height / 2
     text = 'Click on one of the buttons below to get started:'
     drawLabel(text, centerX, topY, size = app.fontSize, font = app.font)
+'''
+    # TODO: fix home screen, maybe add a picture to make it less plain
+    topY = app.height / 3
+    text = ("Click on one of the buttons below to get started. If you " +
+            "don't know how to use Playfair, it's recommended to start " +
+            "with encrypting, as both the decrypt and crack modes will " +
+            "require you to enter an encrypted message.")
+    drawTextbox(app, text, topY)
     
 # Draws the button
 def drawButtons(app):
@@ -1333,6 +1341,7 @@ def drawGrid(app, gridLeft = None, gridTop = None, keyTable = None):
     if (keyTable == None): keyTable = app.keyTable
 
     # Modified from Lecture 3 Animations Case Studies Notes
+    # (https://www.cs.cmu.edu/~112/lecture3/notes/notes-animations-part2.html)
     for row in range(app.rowsCols):
         for col in range(app.rowsCols):
             cellLeft, cellTop = getCellBounds(app, row, col, gridLeft, gridTop)
@@ -1557,6 +1566,7 @@ def makeDigraphString(message):
     return result
 
 # Based on Lecture 3 Animations Case Studies Notes
+# (https://www.cs.cmu.edu/~112/lecture3/notes/notes-animations-part2.html)
 # Returns left, top of box in given row and col
 def getCellBounds(app, row, col, gridLeft, gridTop):
     left = gridLeft + col * app.boxDim
