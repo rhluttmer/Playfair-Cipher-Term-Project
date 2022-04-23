@@ -148,19 +148,20 @@ def initializeButtons(app):
 # Make the buttons that appear on the intro screen
 def initializeIntroButtons(app):
     width, height = app.buttonWidth, app.buttonHeight
+    cy = app.height - app.margin - 0.5 * height
     
     # Encrypt button on intro screen
-    app.encButton = Button(app.width / 4, app.height * 3/4, width, height, 
+    app.encButton = Button(app.width / 4, cy, width, height, 
                            'Encrypt', 'intro')
     app.buttons.append(app.encButton)
 
     # Decrypt button on intro screen
-    app.decButton = Button(app.width / 2, app.height * 3/4, width, height, 
+    app.decButton = Button(app.width / 2, cy, width, height, 
                            'Decrypt', 'intro')
     app.buttons.append(app.decButton)
 
     # Encrypt button on intro screen
-    app.crackButton = Button(app.width * 3/4, app.height * 3/4, width, height, 
+    app.crackButton = Button(app.width * 3/4, cy, width, height, 
                            'Crack', 'intro')
     app.buttons.append(app.crackButton)
 
@@ -900,25 +901,29 @@ def redrawAll(app):
 # Draws the first screen the user sees
 def drawIntroScreen(app):
     # Intro message
-    text = 'Playfair Cipher!'
+    text = 'The Playfair Cipher!'
     topY = drawHeading(app, text)
-    '''
-    centerX, topY = app.width / 2, app.height / 2
-    text = 'Click on one of the buttons below to get started:'
-    drawLabel(text, centerX, topY, size = app.fontSize, font = app.font)
-'''
+    # Source: https://www.extremetech.com/extreme/287094-quantum-cryptography
+    url = ('https://www.extremetech.com/wp-content/uploads/' + 
+           '2019/03/Quantum-crypto-image-from-iStock.jpg')
+    imageWidth = app.width * 0.7
+    imageHeight = imageWidth / 2
+    leftX = app.width / 2 - imageWidth / 2
+    drawImage(url, leftX, topY, width = imageWidth, height = imageHeight)
+    # Learned how to use images through CS Academy Docs
+    # https://cs3.academy.cs.cmu.edu/docs
+
     # TODO: fix home screen, maybe add a picture to make it less plain
-    topY = app.height / 3
+    topY += imageHeight + app.margin
     text = ("Click on one of the buttons below to get started. If you " +
             "don't know how to use Playfair, it's recommended to start " +
             "with encrypting, as both the decrypt and crack modes will " +
             "require you to enter an encrypted message.")
     drawTextbox(app, text, topY)
-    
-# Draws the button
-def drawButtons(app):
-    for button in app.buttons:
-        if ((button.use == 'intro' and app.introVisible) or
+
+# Returns whether button is currently being displayed
+def buttonVisible(app, button):
+    return ((button.use == 'intro' and app.introVisible) or
             (button.use == 'encInstructions' and app.encInstructsVisible) or
             (button.use == 'next' and app.nextButtonVisible) or
             (button.use == 'back' and app.backButtonVisible) or
@@ -928,7 +933,12 @@ def drawButtons(app):
             (button.use == 'decPrep' and app.decPrepVisible) or
             (button.use == 'decSummary' and app.decSummaryVisible) or
             (button.use == 'jumpingToDec' and app.jumpingToDec) or
-            (button.use == 'main' and app.mainMenuButtonVisible)): 
+            (button.use == 'main' and app.mainMenuButtonVisible))
+  
+# Draws the button
+def drawButtons(app):
+    for button in app.buttons:
+        if buttonVisible(app, button): 
             if button.hovering or not button.on:
                 fill = None
                 textCol = 'black'
@@ -1036,7 +1046,7 @@ def drawMakeGridInstructs(app):
 # Makes screen that explains three rules for encryption
 def drawDigraphEncInstructs(app):
     # Draw heading, user input, and grid
-    topY = drawHeading(app, 'Encrypting Digraphs')
+    topY = drawHeading(app, 'Encrypting Pairs of Letters')
     topY = drawEnteredPlusInput(app, topY, 'Message: ', app.plaintextByDigraph)
     gridRight, gridBottom = drawGrid(app, gridTop = topY)
 
@@ -1107,7 +1117,7 @@ def drawEncSummary(app):
     topY = drawTextbox(app, app.ciphertext, topY, color = app.inputColor)
 
     text = ("Now to see how one would decrypt or crack this message (using " +
-            "the message amd what it encrypt to in order to figure out the " +
+            "the message and what it encrypt to in order to figure out the " +
             "key grid), click the 'Decrypt' or 'Crack' buttons below. Or, " +
             "click the button on the right to return to the main menu where " +
             "you can enter new text into either the Encrypt, Decrypt, or " +

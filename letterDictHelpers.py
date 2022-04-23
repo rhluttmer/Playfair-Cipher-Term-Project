@@ -258,32 +258,5 @@ def consolidateColPartners(letterDict):
     
 
 
-# Updates letterDict to say which letter each letter precedes and succeeds
-# in either a row or a column (eg if column is ABCDE then B.succeeds={A})
-# Mutating, TODO delete later, not used in crackTable2
-def updatePrecSuccLetters(letterDict, rowsOrCols):
-    boardDim = 5
-    
-    # Go through each letter, see if we have data on its row or col
-    for letter in letterDict:
-        for rowOrCol in rowsOrCols:
-            letterLoc = rowOrCol.find(letter)
-            if letterLoc == -1:
-                continue
-
-            # If the letter is in a row or col, add what it succeeds and precedes
-            if letterLoc - 1 in range(len(rowOrCol)):
-                letterDict[letter].succeeds.add(rowOrCol[letterLoc-1])
-            if letterLoc + 1 in range(len(rowOrCol)):
-                letterDict[letter].precedes.add(rowOrCol[letterLoc+1])
-
-            # If have full row or column, can wrap around
-            if len(rowOrCol) == boardDim:
-                if letterLoc == 0:
-                    letterDict[letter].succeeds.add(rowOrCol[-1])
-                if letterLoc == boardDim - 1:
-                    letterDict[letter].precedes.add(rowOrCol[0])
-            
-
 
 

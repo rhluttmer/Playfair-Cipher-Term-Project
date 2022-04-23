@@ -316,11 +316,6 @@ def checkPlaceSolveCol(board, digraphMap, letterDict,
 
 # Returns True if a row can be put in a board without changing any letters    
 def canPutRowInBoard(board, boardDim, rowString, row, col, lettersPlaced):
-    # Temporary, should be removed once know this error won't occur
-    if len(rowString) > boardDim:
-        print('Error, row was too long')
-        return False
-    
     for i in range(len(rowString)):
         currCol = (col + i) % boardDim
         # The square either has to be empty or already contain the right letter
@@ -338,12 +333,7 @@ def canPutRowInBoard(board, boardDim, rowString, row, col, lettersPlaced):
 
 
 # Returns True if a col can be put in a board without changing any letters    
-def canPutColInBoard(board, boardDim, colString, row, col, lettersPlaced):
-    # Temporary, should be removed once know this error won't occur
-    if len(colString) > boardDim:
-        print('Error, row was too long')
-        return False
-    
+def canPutColInBoard(board, boardDim, colString, row, col, lettersPlaced):    
     for i in range(len(colString)):
         currCol = (row + i) % boardDim
         # The square either has to be empty or already contain the right letter

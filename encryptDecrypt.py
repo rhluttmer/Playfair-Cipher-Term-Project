@@ -55,11 +55,6 @@ def makeKeyTable(key):
     
     # Remove all but first occurance of letter to get string of len 25
     toPlace = removeStringDuplicates(toPlace)
-    
-    # This should be removed, just in case something goes wrong
-    if len(toPlace) != 25:
-        print('Error', len(toPlace))
-        return None
 
     # actually place the letters in the board
     for row in range(tableDim):
