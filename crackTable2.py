@@ -26,7 +26,9 @@ def crackKeyTable(plaintext, ciphertext):
     # Makes dictionary of what each digraph encrypts to
     digraphMap = makeDigraphMap(plaintext, ciphertext)
     
-    print(digraphMap)
+    if digraphMap == None:
+        return "Inputs not compatible !!!"
+
 
     # Make a dictionary that maps letters to letter instances that store
     # all the information about how the letter encrypts / decrypts
@@ -45,10 +47,11 @@ def crackKeyTable(plaintext, ciphertext):
     
     solution = outerBacktrack(board, rowSet, colSet, rowOrColSet, digraphMap, 
                               letterDict, lettersPlaced)
+    print('newsol', solution)
 
-    print('preprocessed sol', solution)
+
     if solution == None:
-        return "There's no solution!"
+        return "There was no solution !!!"
     else:
         return formatSolution(solution)
 
@@ -65,9 +68,8 @@ def makeDigraphMap(plaintext, ciphertext):
     plaintext = encryptDecrypt.removeNonAlphas(plaintext.upper()).replace('J', 'I')
     ciphertext = encryptDecrypt.removeNonAlphas(ciphertext.upper())
 
-    # Remove later, this is temporary
-    if len(plaintext) > len(ciphertext):
-        print('Error, plaintext and ciphertext not compatible')
+    # This way won't try to run if texts aren't compatible
+    if abs(len(plaintext) - len(ciphertext)) > 1:
         return None
 
 
@@ -164,10 +166,10 @@ def findLongestRow(rows):
 # backtracking function
 def outerBacktrack(board, rowSet, colSet, rowOrColSet, digraphMap, 
                    letterDict, lettersPlaced):
-    print(board)
+    #print(board)
     # Base case
     if len(rowSet) + len(colSet) + len(rowOrColSet) == 0:
-        return innerBacktrack(board, (0,0), letterDict, digraphMap, lettersPlaced)
+        return innerBacktrack(board, 'start', letterDict, digraphMap, lettersPlaced)
 
     # Recursive case. Try to place a row, if none then place a col
     else:
@@ -407,21 +409,28 @@ def isLegalDigraphwise(board, digraphMap, lettersPlaced):
 def innerBacktrack(board, lastLoc, letterDict, digraphMap, lettersPlaced):
     #print('inner', board)
     boardDim = len(board)
+    print(board)
 
     if lastLoc == (boardDim-1, boardDim-1):
         return board
 
     else:
-        newRow, newCol = findNewRowCol(lastLoc, boardDim)
+        if lastLoc == 'start':
+            newRow, newCol = (0,0)
+            lastLetter = 0
+        else:
+            newRow, newCol = findNewRowCol(lastLoc, boardDim)
+            lastRow, lastCol = lastLoc
+            lastLetter = board[lastRow][lastCol]
         newLoc = newRow, newCol
-        lastRow, lastCol = lastLoc
-        lastLetter = board[lastRow][lastCol]
+        
 
         # The spot may already be full, if so, move over one spot, try again
         if board[newRow][newCol] != 0:
             return innerBacktrack(board, newLoc, letterDict, digraphMap, lettersPlaced)
         
         # Start by trying to place letters later alphabetically than lastLetter
+        if lastLoc == 'start': print(makeLetterOrderAlpha(lastLetter, lettersPlaced))
         for newLetter in makeLetterOrderAlpha(lastLetter, lettersPlaced):
             solution = checkPlaceSolveLetter(newLetter, board, newLoc, letterDict, digraphMap, lettersPlaced)
             if solution != None:
@@ -448,9 +457,17 @@ def findNewRowCol(lastLoc, boardDim):
 # Example: letter = D, lettersPlaced = {A, F, I} returns:
 # [E, G, H, K, ...]
 def makeLetterOrderAlpha(letter, lettersPlaced):
+    #print(letter, lettersPlaced)
+    
     uppercaseLets = string.ascii_uppercase
-    letterIndex = uppercaseLets.find(letter)
-    newOrder = list(uppercaseLets[letterIndex+1:] + uppercaseLets[:letterIndex])
+    
+    # Deals with case when "last letter" is over an empty square (filled with 0)
+    if letter == 0:
+        newOrder = list(uppercaseLets)
+    
+    else:
+        letterIndex = uppercaseLets.find(letter)
+        newOrder = list(uppercaseLets[letterIndex+1:] + uppercaseLets[:letterIndex])
 
     i = 0
     while i < len(newOrder):

@@ -2,8 +2,6 @@
 
 from cmu_cs3_graphics import *
 import encryptDecrypt
-import string
-import classes
 import crackTable2
 
 class Button(object):
@@ -13,8 +11,12 @@ class Button(object):
         self.width = width
         self.height = height
         self.label = label
-        self.hovering = False
-        self.on = True
+        self.hovering = False # whether mouse hovering over it
+        self.on = True # whether can be clicked. if off, colored white and
+        # can't be clicked.
+        self.satisfied = False # whether something has been entered.
+        # key entry buttons turn white once satisfied but unlike being off
+        # they can still be clicked.
         self.use = use
 
 class KeyLetter(object):
@@ -371,26 +373,43 @@ def introButtonsClicked(mouseX, mouseY, app):
 
     return False
 
+def getValidInput(app, name):
+    entry = app.getTextInput(f'Please enter your {name}.')
+
+    while encryptDecrypt.removeNonAlphas(entry.upper()) == '':
+        prompt = (f"Please re-enter your {name} making sure it " + 
+                   "conatains at least one letter!")
+        entry = app.getTextInput(prompt)
+
+    return entry
+    
+
 # Returns True if click was in any active button on encryption instructions
 # screen, initiates needed actions
-# TODO make error message display if not correctly answered
-# TODO make check more robust, need at least one letter for message and key
 def encInstructsButtonsClicked(mouseX, mouseY, app):
     if not app.encInstructsVisible:
         return False
 
     # Enter plaintext
     if (mouseInButton(mouseX, mouseY, app.enterMessageButton)):
-        app.plaintext = app.getTextInput('Please enter your message.')
-        if app.key != '' and app.plaintext != '':
+        app.plaintext = getValidInput(app, 'message')
+        
+        app.enterMessageButton.satisfied = True
+
+        if app.enterMessageButton.satisfied and app.enterKeyButton.satisfied:
             app.startEncButton.on = True
+        
         return True
 
     # Enter key
     elif (mouseInButton(mouseX, mouseY, app.enterKeyButton)):
-        app.key = app.getTextInput('Please enter the keyword.')
-        if app.key != '' and app.plaintext != '':
+        app.key = getValidInput(app, 'keyword')
+        
+        app.enterKeyButton.satisfied = True
+
+        if app.enterMessageButton.satisfied and app.enterKeyButton.satisfied:
             app.startEncButton.on = True
+
         return True
         
     # Start encryption once plaintext and key entered
@@ -430,15 +449,20 @@ def decInstructsButtonsClicked(mouseX, mouseY, app):
 
     # Enter encrypted message
     if (mouseInButton(mouseX, mouseY, app.enterMessageDecButton)):
-        app.ciphertext = app.getTextInput('Please enter your encrypted message.')
-        if app.key != '' and app.ciphertext != '':
+        app.ciphertext = getValidInput(app, 'encrypted message')
+        app.enterMessageDecButton.satisfied = True
+
+        if (app.enterMessageDecButton.satisfied and 
+            app.enterKeyDecButton.satisfied):
             app.startDecButton.on = True
         return True
 
     # Enter key
     elif (mouseInButton(mouseX, mouseY, app.enterKeyDecButton)):
-        app.key = app.getTextInput('Please enter the keyword.')
-        if app.key != '' and app.ciphertext != '':
+        app.key = getValidInput(app, 'keyword')
+        app.enterKeyDecButton.satisfied = True
+        if (app.enterMessageDecButton.satisfied and 
+            app.enterKeyDecButton.satisfied):
             app.startDecButton.on = True
         return True
         
@@ -477,15 +501,21 @@ def crackInstructsButtonsClicked(mouseX, mouseY, app):
 
     # Enter encrypted message
     if (mouseInButton(mouseX, mouseY, app.enterMessageCrackButton)):
-        app.plaintext = app.getTextInput('Please enter the original message.')
-        if app.plaintext != '' and app.ciphertext != '':
+        app.plaintext = getValidInput(app, 'original message')
+        app.enterMessageCrackButton.satisfied = True
+
+        if (app.enterMessageCrackButton.satisfied and 
+            app.enterEncMessageCrackButton.satisfied):
             app.startCrackButton.on = True
         return True
 
     # Enter key
     elif (mouseInButton(mouseX, mouseY, app.enterEncMessageCrackButton)):
-        app.ciphertext = app.getTextInput('Please enter the encrypted message.')
-        if app.plaintext != '' and app.ciphertext != '':
+        app.ciphertext = getValidInput(app, 'encrypted message')
+        app.enterEncMessageCrackButton.satisfied = True
+
+        if (app.enterMessageCrackButton.satisfied and 
+            app.enterEncMessageCrackButton.satisfied):
             app.startCrackButton.on = True
         return True
         
@@ -630,26 +660,16 @@ def onMouseMove(app, mouseX, mouseY):
 
 # Used for cheats
 def onKeyPress(app, key):
-    # Bring to grid screen
-    if key == 'g':
-        app.plaintext = 'How are you doing? Im okay today'
-        app.key = 'computer'
-
-        startMakeGridInstructs(app)
-        
-    # Bring to process message screen
-    if key == 'p':
-        app.plaintext = app.defaultPlaintext
-        app.key = app.defaultKey
-        
-        startProcessMessageInstructs(app)
-        
     # Brings user to main menu
     if key == 'm':
         turnOffAllStates(app)
         app.introVisible = True
-        
 
+    # Restarts whole app
+    if key == 'r':
+        onAppStart(app)
+        
+        
 
 #----------Start State Functions and their helpers----------
 # They set the correct state and make all variables needed for drawing
@@ -821,27 +841,38 @@ def onStep(app):
 # This finds the result and turns it into a form that the drawGrid function
 # can interperet (it needs to be a list of KeyLetter instances)
 def makeCrackKeyTable(app):
+    boardDim = 5
+
     crackedResult = crackTable2.crackKeyTable(app.plaintext, app.ciphertext)
-
+    
+    # Deal with case for no solution
+    if isinstance(crackedResult, str):
+        L = list(crackedResult)
+        table = []
+        for i in range(boardDim):
+            rowList = []
+            for letter in L[boardDim * i: boardDim * (i+1)]:
+                rowList.append(KeyLetter(letter, 'black', fill = 'red'))
+            table.append(rowList)
+        app.keyTable = table
+        return
+        
+    # Deal with normal case (a key grid was found)
     endRow, endCol = findEndOfKeyWord(crackedResult)
-
-    inKeyWord = True
-
+    inKeyWord = True # stays true until we reach a letter no longer in key
     newTable = []
     for row in range(len(crackedResult)):
         newRowList = []
         for col in range(len(crackedResult[0])):
             if row == endRow and col == endCol:
                 inKeyWord = False
-
             letter = crackedResult[row][col]
+            # Fill the keyword yellow
             fill = app.resultFillColor if (inKeyWord) else None
             newRowList.append(KeyLetter(letter, 'black', fill = fill))
-
-            
         
         newTable.append(newRowList)
-    
+
     app.keyTable = newTable
    
 # Returns the row and column after which everything is in alphabetical order
@@ -935,11 +966,14 @@ def buttonVisible(app, button):
             (button.use == 'jumpingToDec' and app.jumpingToDec) or
             (button.use == 'main' and app.mainMenuButtonVisible))
   
-# Draws the button
+# Draws the buttons
+
+
+
 def drawButtons(app):
     for button in app.buttons:
         if buttonVisible(app, button): 
-            if button.hovering or not button.on:
+            if button.hovering or not button.on or button.satisfied:
                 fill = None
                 textCol = 'black'
             else:
@@ -1283,6 +1317,10 @@ def drawDigraphPairs(app, topY):
     letterWidth = app.fontSize * app.fontWidthToHeightRatio
     blockWidth = letterWidth * blockLen
     blocks = int((app.width - 2 * app.margin - 3 * letterWidth) / blockWidth)
+    # So that if there are fewer than 'blocks' digraph, we only print the 
+    # existing digraphs
+    blocks = min(blocks, len(app.plaintextByDigraph) // 2, 
+                 len(app.ciphertextByDigraph) // 2)
 
     # Helper function to draw one colored text and return end position
     def drawLabelReturnX(text, leftX, topY, color = 'black'):
@@ -1312,10 +1350,10 @@ def drawCrackingResults(app):
     topY = drawHeading(app, 'Cracking Results')
     text = ("By using the strategies outlined in the last screen, we get a " +
             "lot of information about which letters are in rows or columns " +
-            "together (either consecutively or just in general). We use this " +
-            "information to play around with placing letters, kind of " +
-            "like what is done in a Sudoku. We end up with this grid: "+
-            "(it will display once found, may take time)")
+            "together. We use this information to play around " +
+            "with placing letters, kind of like what is done in a Sudoku. " +
+            "We end up with this grid: (it will display once found but "+
+            "may take some time, it turns red if there's no solution)")
     topY = drawTextbox(app, text, topY)
 
     gridRight, gridBottom = drawGrid(app, gridTop = topY)
