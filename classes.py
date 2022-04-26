@@ -1,23 +1,20 @@
 # Rose Luttmer
 
 '''
-Defines the classes used in all other playfair files
+Defines the classes used in algorithmic playfair files (everything but graphics)
 
 Digraph class stores pairs of letters
-Letter class stores sinlge letter
+Letter class stores a sinlge letter
 
 '''
 
-
+# Used to store pairs of letters
 class Digraph(object):
     def __init__(self, letter1, letter2):
         self.let1 = letter1
         self.let2 = letter2
 
-        # These two are populated by functions later on
-        self.encryptsTo = None
-        self.decryptsTo = None
-    
+    # Make a new digraph that is the reverse of the first one
     def reverse(self):
         return Digraph(self.let2, self.let1)
     
@@ -26,11 +23,12 @@ class Digraph(object):
                 and self.let2 == other.let2)
     
     def __repr__(self):
-        return f'({self.let1}, {self.let2})'
+        return f'{self.let1}{self.let2}'
 
     def __hash__(self):
         return hash((self.let1, self.let2))
 
+# Stores a single letter, sued for cracking
 class Letter(object):
     def __init__(self, letterName):
         self.name = letterName
@@ -40,7 +38,7 @@ class Letter(object):
         self.inSameRow = set()
         self.inSameCol = set()
 
-    # For now, I have all info included to make debugging easier
+    # I have all info included to make debugging easier
     def __repr__(self):
         return (f'{self.name}, encrypts to {self.encryptsTo}, ' + 
                 f'row with {self.inSameRow}, col with {self.inSameCol}')

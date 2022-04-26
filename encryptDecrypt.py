@@ -12,13 +12,10 @@ Rules being used:
 6. Remove all non-alpha characters (instead of keeping as is
 because this makes it more secure)
 
-Still need to make this more user proof
 '''
 
 import string
 import classes
-
-
 
 
 # Takes a message, key, and mode (encrypt or decrypt) and returns newMessage
@@ -94,6 +91,7 @@ def makeDigraphL(text):
     digraphList = []
 
     for i in range(0, len(text), 2):
+        # Add X's when there are double letters or at the end of a message
         if i+1 >= len(text) or text[i] == text[i+1]:
             digraph = classes.Digraph(text[i], 'X')
         else:
@@ -124,11 +122,11 @@ def findNewDigraph(digraph, keyTable, mode='encrypt'):
 
     (letter1, letter2) = digraph.let1, digraph.let2
 
+    # Need to know where letters are in grid as this changes how they encrypt
     (row1, col1) = findRowCol(letter1, keyTable)
-    #print(row1, col1)
     (row2, col2) = findRowCol(letter2, keyTable)
-    #print(row2, col2)
 
+    # Letters in same row move one to the right (encrypt) or left (decrypt)
     if row1 == row2:
         if mode == 'encrypt':
             newCol1 = (col1 + 1) % boardDim
@@ -140,6 +138,7 @@ def findNewDigraph(digraph, keyTable, mode='encrypt'):
         newLetter1 = keyTable[row1][newCol1]
         newLetter2 = keyTable[row2][newCol2]
     
+    # Letters in same col move one down (encrypt) or up (decrypt)
     elif col1 == col2:
         if mode == 'encrypt':
             newRow1 = (row1 + 1) % boardDim
@@ -150,6 +149,8 @@ def findNewDigraph(digraph, keyTable, mode='encrypt'):
         
         newLetter1 = keyTable[newRow1][col1]
         newLetter2 = keyTable[newRow2][col2]
+    
+    # Otherwise letters stay in same row but go to the column of the other let
     else:
         newLetter1 = keyTable[row1][col2]
         newLetter2 = keyTable[row2][col1]
@@ -160,7 +161,6 @@ def findNewDigraph(digraph, keyTable, mode='encrypt'):
 # Finds row and col index of letter (uses fact that only once in list)
 # Helper for findNewDigraph
 def findRowCol(letter, keyTable):
-
     for row in range(len(keyTable)):
         for col in range(len(keyTable[0])):
             if keyTable[row][col] == letter:

@@ -13,15 +13,14 @@ And we also have a set of some ordered bits that must be in rows
 
 This source was used to get ideas of what to look for to learn about
 how the letters are situated in the key grid
-(https://crypto.stackexchange.com/questions/35722/how-to-find-the-keyword-of-the-playfair-cipher-given-the-plaintext-and-the-ciph)
+(https://crypto.stackexchange.com/questions/35722/how-to-find-the-keyword-of-the
+-playfair-cipher-given-the-plaintext-and-the-ciph)
 
 '''
-
 
 import classes
 
 #---------Make dict and add what each letter encrypts to----------
-
 
 # Makes a dict mapping letter names to 'Letter' instances
 def makeEmptyLetterDict():
@@ -117,7 +116,6 @@ def findSimpleRowsOrCols(digraphMap):
 # For example ABC and BCD can combine into ABCD 
 # Helper for findSimpleRowsOrCols
 def combineRowsCols(rowsOrCols):
-   
     # Loop through pairs in list (done with 'while' because list mutates)
     i = 0
     while i < len(rowsOrCols):

@@ -1,4 +1,10 @@
-# Fix process message : make function call take argument
+# Rose Luttmer
+'''
+This is the primary file of the Playfair cipher project. Running this
+will open up an app in which the user can enter messages to encrypt,
+decrypt, or crack. The graphics also walkthrough how the Playfair cipher works.
+
+'''
 
 from cmu_cs3_graphics import *
 import encryptDecrypt
@@ -71,7 +77,7 @@ def turnOffAllStates(app):
     app.mainMenuButtonVisible = False
     
     app.jumpingToDec = False
-
+   
 # Makes every isVisible state false but then turns the next and back buttons on
 def turnOffAllStatesButBackNextButtons(app):
     turnOffAllStates(app)
@@ -187,7 +193,6 @@ def initializeEncryptButtons(app):
     app.startEncButton.on = False
     app.buttons.extend([app.enterMessageButton, app.enterKeyButton,
                        app.startEncButton, app.useDefaultsEncButton])
-
 
 # Make the buttons that appear on the first decryption screen
 def initializeDecryptButtons(app):
@@ -321,8 +326,7 @@ def initializeDecPrepButtons(app):
     app.decPrepKeyButton = Button(cx, cy, buttonWidth, buttonHeight, 
                                   'Make Key Grid', 'decPrep')
     app.buttons.append(app.decPrepKeyButton)
-   
-      
+        
 ########################################################
 #                      Control
 ########################################################
@@ -383,7 +387,6 @@ def getValidInput(app, name):
 
     return entry
     
-
 # Returns True if click was in any active button on encryption instructions
 # screen, initiates needed actions
 def encInstructsButtonsClicked(mouseX, mouseY, app):
@@ -657,7 +660,6 @@ def onMouseMove(app, mouseX, mouseY):
         else:
             button.hovering = False
     
-
 # Used for cheats
 def onKeyPress(app, key):
     # Brings user to main menu
@@ -667,9 +669,7 @@ def onKeyPress(app, key):
 
     # Restarts whole app
     if key == 'r':
-        onAppStart(app)
-        
-        
+        onAppStart(app)     
 
 #----------Start State Functions and their helpers----------
 # They set the correct state and make all variables needed for drawing
@@ -952,24 +952,7 @@ def drawIntroScreen(app):
             "require you to enter an encrypted message.")
     drawTextbox(app, text, topY)
 
-# Returns whether button is currently being displayed
-def buttonVisible(app, button):
-    return ((button.use == 'intro' and app.introVisible) or
-            (button.use == 'encInstructions' and app.encInstructsVisible) or
-            (button.use == 'next' and app.nextButtonVisible) or
-            (button.use == 'back' and app.backButtonVisible) or
-            (button.use == 'encSummary' and app.encSummaryVisible) or
-            (button.use == 'decInstructions' and app.decInstructsVisible) or
-            (button.use == 'crackInstructions' and app.crackInstructsVisible) or
-            (button.use == 'decPrep' and app.decPrepVisible) or
-            (button.use == 'decSummary' and app.decSummaryVisible) or
-            (button.use == 'jumpingToDec' and app.jumpingToDec) or
-            (button.use == 'main' and app.mainMenuButtonVisible))
-  
 # Draws the buttons
-
-
-
 def drawButtons(app):
     for button in app.buttons:
         if buttonVisible(app, button): 
@@ -995,6 +978,21 @@ def drawButtons(app):
             drawLabel(button.label, button.cx, button.cy, size = labelSize, 
                       fill = textCol, font = app.font, bold = bold)
 
+# Returns whether button is currently being displayed
+# Helper for drawButtons
+def buttonVisible(app, button):
+    return ((button.use == 'intro' and app.introVisible) or
+            (button.use == 'encInstructions' and app.encInstructsVisible) or
+            (button.use == 'next' and app.nextButtonVisible) or
+            (button.use == 'back' and app.backButtonVisible) or
+            (button.use == 'encSummary' and app.encSummaryVisible) or
+            (button.use == 'decInstructions' and app.decInstructsVisible) or
+            (button.use == 'crackInstructions' and app.crackInstructsVisible) or
+            (button.use == 'decPrep' and app.decPrepVisible) or
+            (button.use == 'decSummary' and app.decSummaryVisible) or
+            (button.use == 'jumpingToDec' and app.jumpingToDec) or
+            (button.use == 'main' and app.mainMenuButtonVisible))
+  
 #---------------Encryption Screens-----------------------
 
 # Draws the instructions for encryption (the screen where the user enters input)
@@ -1265,7 +1263,6 @@ def drawDecSummary(app):
     topY = drawTextbox(app, text, topY)
     
     
-
 #-------------------Cracking screens-----------
 # Makes the screen where the user enter inputs for the cracking program
 def drawCrackInstructs(app):
