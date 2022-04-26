@@ -53,7 +53,7 @@ def onAppStart(app):
     initializeMessageVars(app)
     initializeTextVars(app)
 
-# Makes every isVisible state false
+# Makes every state false
 def turnOffAllStates(app):
     app.introVisible = False
     app.encrypting = False
@@ -109,7 +109,8 @@ def initializeMessageVars(app):
     app.plaintext = ''
     app.key = ''
     app.ciphertext = ''
-    app.defaultPlaintext = "This is a secret message to encrypt. Enjoy.  CS is great"
+    app.defaultPlaintext = ("This is a secret message to encrypt. " +
+                            "Enjoy. CS is great!")
     app.defaultKey = 'Playfair'
     app.defaultCiphertext = encryptDecrypt.encDecPlayfair(app.defaultPlaintext, 
                                                           app.defaultKey)

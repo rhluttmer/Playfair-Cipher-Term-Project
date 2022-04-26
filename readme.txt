@@ -12,7 +12,7 @@ For cracking, the user enters the message and its encoded version. The program
 then returns an encryption grid that would yield the proper encryption.
 
 How to run the project:
-Run the encDecGraphics file. This will open up the interactive user interface,
+Run the playfairGraphics file. This will open up the interactive user interface,
 and then simply follow the instructions on screen. Interacting with the app
 will automatically run any other file that is needed for you. Likewise,
 there is no data entry that needs to be done ahead of time, all inputs will
@@ -34,7 +34,7 @@ all previous inputs
 
 
 Description of files:
--encDecGraphics.py: again, this is the main file to run. All code related
+-playfairGraphics.py: again, this is the main file to run. All code related
 to graphics is kept in this file
 -encryptDecrypt.py : has all helpers for encrypting and decrypting the
 playfair cipher
@@ -46,6 +46,7 @@ there are some classes only for drawing, and these are in the graphics file
 to store a bunch of info about the letters, what they are in rows/cols with,
 their neighbors, etc. This file holds the helper functions for that.
 -design proposal / storyboard: the required tp design proposal and storyboard
+-demo-video.txt: link to youtube video demo
 
 
 
