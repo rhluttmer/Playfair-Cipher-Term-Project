@@ -96,8 +96,10 @@ def makeDigraphMap(plaintext, ciphertext):
 
         # In playfair, a digraph always encrypts to same thing, so if
         # digraph is encrypting to two different things, something's wrong
-        if plainDigraph in digraphMap and cipherDigraph != digraphMap[plainDigraph]:
-            return f'Error {plainDigraph} becomes {digraphMap[plainDigraph]} & {cipherDigraph}!'
+        if (plainDigraph in digraphMap and 
+            cipherDigraph != digraphMap[plainDigraph]):
+            return (f"Error {plainDigraph} becomes {digraphMap[plainDigraph]}" +
+                     f" & {cipherDigraph}!")
         
         digraphMap[plainDigraph] = cipherDigraph
 
@@ -206,7 +208,8 @@ def outerBacktrack(board, rowSet, colSet, rowOrColSet, digraphMap,
                    letterDict, lettersPlaced):
     # Base case
     if len(rowSet) + len(colSet) + len(rowOrColSet) == 0:
-        return innerBacktrack(board, 'start', letterDict, digraphMap, lettersPlaced)
+        return innerBacktrack(board, 'start', letterDict, digraphMap, 
+                              lettersPlaced)
 
     # Recursive case. Try to place a row, if none then place a col
     else:
@@ -384,7 +387,7 @@ def putInCol(board, colString, row, col):
     return newBoard
     
    
-# Returns False is from current board, a required digraph won't encrypt correctly
+# Returns False is from current board, a digraph won't encrypt correctly
 def isLegalDigraphwise(board, digraphMap, lettersPlaced):
     # Loop through digraphs in plaintext message
     for plainDigraph in digraphMap:
@@ -430,11 +433,14 @@ def innerBacktrack(board, lastLoc, letterDict, digraphMap, lettersPlaced):
 
         # The spot may already be full, if so, move over one spot, try again
         if board[newRow][newCol] != 0:
-            return innerBacktrack(board, newLoc, letterDict, digraphMap, lettersPlaced)
+            return innerBacktrack(board, newLoc, letterDict, digraphMap, 
+                                  lettersPlaced)
         
         # Start by trying to place letters later alphabetically than lastLetter
         for newLetter in makeLetterOrderAlpha(lastLetter, lettersPlaced):
-            solution = checkPlaceSolveLetter(newLetter, board, newLoc, letterDict, digraphMap, lettersPlaced)
+            solution = checkPlaceSolveLetter(newLetter, board, newLoc, 
+                                             letterDict, digraphMap, 
+                                             lettersPlaced)
             if solution != None:
                 return solution
         
@@ -467,7 +473,8 @@ def makeLetterOrderAlpha(letter, lettersPlaced):
     
     else:
         letterIndex = uppercaseLets.find(letter)
-        newOrder = list(uppercaseLets[letterIndex+1:] + uppercaseLets[:letterIndex])
+        newOrder = list(uppercaseLets[letterIndex+1:] + 
+                        uppercaseLets[:letterIndex])
 
     i = 0
     while i < len(newOrder):
@@ -481,7 +488,8 @@ def makeLetterOrderAlpha(letter, lettersPlaced):
 
 # Checks if legal, if so then places letter and solves from there,
 # unplaces letter at end if no solution was found. Returns solution or None
-def checkPlaceSolveLetter(letter, board, newLoc, letterDict, digraphMap, lettersPlaced):
+def checkPlaceSolveLetter(letter, board, newLoc, letterDict, digraphMap, 
+                          lettersPlaced):
     newRow, newCol = newLoc
     
     # This shouldn't happen with current setup, but have it just in case
@@ -496,7 +504,8 @@ def checkPlaceSolveLetter(letter, board, newLoc, letterDict, digraphMap, letters
     if (isLegalLetterwise(letter, board, newLoc, letterDict, lettersPlaced) and
         isLegalDigraphwise(board, digraphMap, lettersPlaced)):
         
-        solution = innerBacktrack(board, newLoc, letterDict, digraphMap, lettersPlaced)
+        solution = innerBacktrack(board, newLoc, letterDict, digraphMap, 
+                                  lettersPlaced)
         
         if solution != None:
             return solution

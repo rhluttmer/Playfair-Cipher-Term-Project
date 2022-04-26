@@ -110,7 +110,8 @@ def initializeMessageVars(app):
     app.key = ''
     app.ciphertext = ''
     app.defaultPlaintext = ("This is a secret message to encrypt. " +
-                            "Enjoy. CS is great!")
+                            "Enjoy. This is a sentence that I wrote "+
+                            "so that cracking would finish faster!")
     app.defaultKey = 'Playfair'
     app.defaultCiphertext = encryptDecrypt.encDecPlayfair(app.defaultPlaintext, 
                                                           app.defaultKey)
@@ -239,8 +240,9 @@ def initializeCrackButtons(app):
                                         height, 'Use defaults', 
                                         'crackInstructions')
     app.startCrackButton.on = False
-    app.buttons.extend([app.enterMessageCrackButton, app.enterEncMessageCrackButton,
-                       app.startCrackButton, app.useDefaultsCrackButton])
+    app.buttons.extend([app.enterMessageCrackButton,
+                        app.enterEncMessageCrackButton, app.startCrackButton, 
+                        app.useDefaultsCrackButton])
 
 # Make the back, next, jump, and menu buttons
 # (Basically, this is meant for buttons that show up on multiple screens)
@@ -1375,9 +1377,11 @@ def drawDigraphPairs(app, topY):
         plainDigraph = app.plaintextByDigraph[digraphStart:digraphStart+2]
         cipherDigraph = app.ciphertextByDigraph[digraphStart:digraphStart+2]
 
-        leftX = drawLabelReturnX(plainDigraph, leftX, topY, color = app.inputColor)
+        leftX = drawLabelReturnX(plainDigraph, leftX, topY, 
+                                 color = app.inputColor)
         leftX = drawLabelReturnX(':', leftX, topY)
-        leftX = drawLabelReturnX(cipherDigraph, leftX, topY, color = app.inputColor2)
+        leftX = drawLabelReturnX(cipherDigraph, leftX, topY, 
+                                 color = app.inputColor2)
         leftX = drawLabelReturnX(' '*2, leftX, topY)
 
     drawLabelReturnX('etc', leftX, topY)
@@ -1646,8 +1650,8 @@ def drawEnteredPlusInputNoElipses(app, topY, blackText, inputText,
         while partialLine[-1] != ' ':
             partialLine = partialLine[:-1]
         rest = inputText[len(partialLine):]
-        topY = drawTextbox(app, partialLine, endYTop, left = endX, width = width, 
-                           color = inputColor) - app.parSpace
+        topY = drawTextbox(app, partialLine, endYTop, left=endX, width=width, 
+                           color=inputColor) - app.parSpace
 
     topY = drawTextbox(app, rest, topY, left = left, color = inputColor)
     return topY
