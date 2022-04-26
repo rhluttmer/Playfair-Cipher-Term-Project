@@ -27,7 +27,10 @@ def crackKeyTable(plaintext, ciphertext):
     # Make a dictionary that maps letters to letter instances that store
     # all the information about how the letter encrypts / decrypts
     letterDict, rowSet, colSet, rowOrColSet = createAndPopulateLetterDict(digraphMap)
-    print(rowSet, colSet, rowOrColSet) #TODO DELETE LATER
+
+    # LetterDict is only a string if there was an error
+    if isinstance(letterDict, str):
+        return letterDict
     
     board = [[0] * boardDim for _ in range(boardDim)] # Make empty board
     
@@ -49,13 +52,10 @@ def crackKeyTable(plaintext, ciphertext):
     else:
         lettersPlaced = set()
     
-    print(board)
 
     solution = outerBacktrack(board, rowSet, colSet, rowOrColSet, digraphMap, 
                               letterDict, lettersPlaced)
     
-    print('newsol', solution)
-
 
     if solution == None:
         return "There was no solution !!!"
@@ -130,7 +130,11 @@ def inverseDictionary(dictionary, value):
 def createAndPopulateLetterDict(digraphMap):
     letterDict = letterDictHelpers.makeEmptyLetterDict()
 
-    letterDictHelpers.addEncryptsTo(digraphMap, letterDict)
+    temp = letterDictHelpers.addEncryptsTo(digraphMap, letterDict)
+
+    # Will return an error if a letter encrypts to itself
+    if temp != None:
+        return temp, None, None, None
     
     # Adds some letters that must be in same row
     letterDictHelpers.makeRowPartners(letterDict)

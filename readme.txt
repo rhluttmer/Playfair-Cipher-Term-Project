@@ -30,6 +30,7 @@ Both of these keys can be pressed once in the interactive app.
 will still remember your previous input. 
 - r: restarts app and brings user to main menu. This makes the app forget
 all previous inputs
+- e: brings user to Crack Results screen on an input that created an error
 
 
 Description of files:

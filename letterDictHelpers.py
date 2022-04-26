@@ -37,6 +37,13 @@ def makeEmptyLetterDict():
 def addEncryptsTo(digraphMap, letterDict):
     for digraph in digraphMap:
         encodedDigraph = digraphMap[digraph]
+
+        # In playfair, the same letter will never encrypt to itself
+        if digraph.let1 == encodedDigraph.let1:
+            return f"Error{digraph.let1} encrypts to itself"
+        if digraph.let2 == encodedDigraph.let2:
+            return f"Error{digraph.let2} encrypts to itself"
+
         letterDict[digraph.let1].encryptsTo.add(encodedDigraph.let1)
         letterDict[digraph.let2].encryptsTo.add(encodedDigraph.let2)
 

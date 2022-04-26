@@ -71,6 +71,8 @@ def turnOffAllStates(app):
     app.crackInstructsVisible = False
     app.crackingSetupVisible = False
     app.crackingResultVisible = False
+    app.crackErrorExplanationVisible = False
+    app.crackError = False
 
     app.nextButtonVisible = False
     app.backButtonVisible = False
@@ -152,6 +154,7 @@ def initializeButtons(app):
     initializeEncSummaryButtons(app)
     initializeDecPrepButtons(app)
     initializeDecSummaryButtons(app)
+    initializeCrackErrorButtons(app)
     
 # Make the buttons that appear on the intro screen
 def initializeIntroButtons(app):
@@ -216,7 +219,7 @@ def initializeDecryptButtons(app):
     app.buttons.extend([app.enterMessageDecButton, app.enterKeyDecButton,
                        app.startDecButton, app.useDefaultsDecButton])
 
-# Make the buttons that appear on the first decryption screen
+# Make the buttons that appear on the first cracking screen
 def initializeCrackButtons(app):
     width, height = app.buttonWidth, app.buttonHeight
     
@@ -326,7 +329,20 @@ def initializeDecPrepButtons(app):
     app.decPrepKeyButton = Button(cx, cy, buttonWidth, buttonHeight, 
                                   'Make Key Grid', 'decPrep')
     app.buttons.append(app.decPrepKeyButton)
-        
+
+# Makes the button that will appear if the message couldn't be cracked
+def initializeCrackErrorButtons(app):
+    # Make these buttons short but wide
+    buttonHeight  = 0.5 * app.buttonHeight 
+    buttonWidth = 1.5 * app.buttonWidth
+
+    cy = app.height - buttonHeight / 2 - app.margin / 2
+    cx = app.width / 2
+    app.crackErrorButton = Button(cx, cy, buttonWidth, buttonHeight,
+                                  "Understand Error", 'crackError')
+    app.buttons.append(app.crackErrorButton)
+    
+     
 ########################################################
 #                      Control
 ########################################################
@@ -352,6 +368,7 @@ def onMousePress(app, mouseX, mouseY):
             decSummaryButtonsClicked(mouseX, mouseY, app) or
 
             crackInstructsButtonsClicked(mouseX, mouseY, app) or
+            crackErrorButtonsClicked(mouseX, mouseY, app) or
             
             jumpButtonsClicked(mouseX, mouseY, app))
 
@@ -377,6 +394,7 @@ def introButtonsClicked(mouseX, mouseY, app):
 
     return False
 
+# Will reprompt user for entry until the entry has at least one letter
 def getValidInput(app, name):
     entry = app.getTextInput(f'Please enter your {name}.')
 
@@ -536,6 +554,14 @@ def crackInstructsButtonsClicked(mouseX, mouseY, app):
 
     return False
 
+# Returns True if click was in the explain error button, initiates needed action
+def crackErrorButtonsClicked(mouseX, mouseY, app):
+    if app.crackError and mouseInButton(mouseX, mouseY, app.crackErrorButton):
+        startCrackErrorExplanation(app)
+        return True
+    
+    return False
+        
 # Brings user to the next page when they click the next button
 def nextButtonClicked(mouseX, mouseY, app):
     if (not mouseInButton(mouseX, mouseY, app.nextButton) or 
@@ -598,6 +624,12 @@ def backButtonClicked(mouseX, mouseY, app):
     elif app.crackingResultVisible:
         startCrackingSetup(app)
 
+    elif app.crackErrorExplanationVisible:
+        # Doesn't call startCrackingResults so that not all the computation
+        # has to be repeated
+        app.crackErrorExplanationVisible = False
+        app.crackError = True
+        app.crackingResultVisible = True
     
     return True
 
@@ -668,8 +700,16 @@ def onKeyPress(app, key):
         app.introVisible = True
 
     # Restarts whole app
-    if key == 'r':
+    elif key == 'r':
         onAppStart(app)     
+
+    # To test crack error screen
+    elif key == 'e':
+        # These are inputs that oobviously creat an error
+        app.plaintext = 'hello'
+        app.ciphertext = 'melon'
+        startCrackingResult(app)
+
 
 #----------Start State Functions and their helpers----------
 # They set the correct state and make all variables needed for drawing
@@ -825,6 +865,7 @@ def startCrackingResult(app):
     app.keyTable = None
     app.crackingResultVisible = True
     app.mustFindKey = True
+    app.crackError = False
     
 # This is used for cracking. If in startCrackResults we immediately call
 # crackTable2, then the graphics don't show the next screen until the result
@@ -847,6 +888,7 @@ def makeCrackKeyTable(app):
     
     # Deal with case for no solution
     if isinstance(crackedResult, str):
+        app.crackError = True # Shows that could not be cracked
         L = list(crackedResult)
         table = []
         for i in range(boardDim):
@@ -892,6 +934,12 @@ def findEndOfKeyWord(L):
     
     return afterEndRow, afterEndCol
 
+# Prepares for screen that will explain why the cracking didn't work 
+def startCrackErrorExplanation(app):
+    turnOffAllStates(app)
+    app.backButtonVisible = True
+    app.mainMenuButtonVisible = True
+    app.crackErrorExplanationVisible = True
     
 ########################################################
 #                      View
@@ -925,6 +973,8 @@ def redrawAll(app):
 
     elif app.crackingResultVisible: drawCrackingResults(app)
 
+    elif app.crackErrorExplanationVisible: drawCrackErrorExplanation(app)
+
  
     
     drawButtons(app)
@@ -944,7 +994,6 @@ def drawIntroScreen(app):
     # Learned how to use images through CS Academy Docs
     # https://cs3.academy.cs.cmu.edu/docs
 
-    # TODO: fix home screen, maybe add a picture to make it less plain
     topY += imageHeight + app.margin
     text = ("Click on one of the buttons below to get started. If you " +
             "don't know how to use Playfair, it's recommended to start " +
@@ -991,7 +1040,8 @@ def buttonVisible(app, button):
             (button.use == 'decPrep' and app.decPrepVisible) or
             (button.use == 'decSummary' and app.decSummaryVisible) or
             (button.use == 'jumpingToDec' and app.jumpingToDec) or
-            (button.use == 'main' and app.mainMenuButtonVisible))
+            (button.use == 'main' and app.mainMenuButtonVisible) or
+            (button.use == 'crackError' and app.crackError))
   
 #---------------Encryption Screens-----------------------
 
@@ -1030,7 +1080,6 @@ def drawProcessMessageInstructs(app):
             ' so we will split the message up into pairs:')
     spacedMessage = putSpacesInAndKillJs(uppercaseMessage)
     topY = drawExplanationPlusOneLine(app, text, spacedMessage, topY)
-    # TODO: Make it so that all J's turned into I's are colored
 
     # Explain why and then display the final set of digraphs ready for encrypt
     # Left off here
@@ -1086,8 +1135,6 @@ def drawDigraphEncInstructs(app):
     text = "We encrypt two letters at a time with the following rules:"
     topY = drawTextbox(app, text, topY, gridRight)
 
-    # TODO: Add arrows onto digram
-
     # In rows
     text = ("1. Letters in the same row encrypt to the letters to their " +
             "right (and there's wrap around). For example, ")
@@ -1119,7 +1166,6 @@ def drawDigraphEncInstructs(app):
 
     finalTopY = max(topY, topY2)
     
-    # TODO, make each digraph colored by strategy used to encrypt it
     drawWithElipses(app, app.ciphertextByDigraph, finalTopY, 
                     color = app.inputColor)
 
@@ -1127,7 +1173,7 @@ def drawDigraphEncInstructs(app):
 def drawEncSummary(app):
     topY = drawHeading(app, 'Encryption Summary')
     
-    text = "So we started with a message in a key, which were: "
+    text = "So we started with a message and a key, which were: "
     topY = drawTextbox(app, text, topY)
     text = 'Key: '
     drawEnteredPlusInput(app, topY, text, app.key)
@@ -1200,8 +1246,6 @@ def drawDigraphDecInstructs(app):
     text = "We decrypt two letters at a time with the following rules:"
     topY = drawTextbox(app, text, topY, gridRight)
 
-    # TODO: Add arrows onto digraph
-
     # In rows
     text = ("1. Letters in the same row decrypt to the letters to their " +
             "left (and there's wrap around). For example, ")
@@ -1233,7 +1277,6 @@ def drawDigraphDecInstructs(app):
 
     finalTopY = max(topY, topY2)
     
-    # TODO, make each digraph colored by strategy used to decrypt it
     drawWithElipses(app, app.plaintextByDigraph, finalTopY, 
                     color = app.inputColor)
 
@@ -1276,7 +1319,6 @@ def drawCrackInstructs(app):
 
 # Shows how to set up for cracking
 def drawCrackingSetup(app):
-    # TODO: return error message if plaintext and ciphertext not the same
     topY = drawHeading(app, 'Cracking Set Up')
     text = ("First we prepare the plain ciphertexts by removing illegal " + 
             "characters, adding 'X's, and splitting them into " +
@@ -1364,7 +1406,36 @@ def drawCrackingResults(app):
             "will yield the coded message you entered.")
     drawTextbox(app, text, topY, left = gridRight)
 
+# If there is no result from cracking, will explain what the error message meant
+def drawCrackErrorExplanation(app):
+    topY = drawHeading(app, 'Explanation of Errors')
     
+    text = ("There are several different error messages: " )
+    topY = drawTextbox(app, text, topY)
+
+    text = ("If you got the message 'Inputs not compatible', this means your "+ 
+            "plaintext and ciphertext were different lengths, so they can't " +
+            "be the same message.")
+    topY = drawTextbox(app, text, topY)
+
+    text = ("If you got the message saying 'L encrypts to itself' this is " +
+            "an error because the way Playfair works, a letter will always " +
+            "encrypt to a different letter.")
+    topY = drawTextbox(app, text, topY)
+
+    text = ("If you got the message 'AB becomes CD and EF' or 'AB & CD " +
+            "map to EF' this is an error because each pair in Playfair " +
+            "encrypts to exactly one pair and has exactly one pair that " + 
+            "encrypts to it ")
+    topY = drawTextbox(app, text, topY)
+
+    text = ("Finally, if you got the message 'There is no solution' this " + 
+            "means that there was nothing obviously wrong with your inputs, "+
+            "but that we went through all possibilities of key tables and "+
+            "none worked. Recheck your inputs.")
+    topY = drawTextbox(app, text, topY)
+
+
 #----------------Drawing functions used in multiple modes---------
 
 # Puts text in the right spot for the encryption, decryption, and cracking
